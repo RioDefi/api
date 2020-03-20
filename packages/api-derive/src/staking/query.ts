@@ -13,7 +13,7 @@ import { Option, Vec } from '@polkadot/types';
 
 import { memo } from '../util';
 
-type MultiResult = [Option<AccountId>, Option<ITuple<[Nominations]>>, RewardDestination, ITuple<[ValidatorPrefs]>, Option<Keys>, Exposure];
+type MultiResult = [Option<AccountId>, Option<ITuple<[Nominations]> | Nominations>, RewardDestination, ITuple<[ValidatorPrefs]> | ValidatorPrefs, Option<Keys>, Exposure];
 
 function unwrapSessionIds (stashId: AccountId, queuedKeys: [AccountId, Keys][], nextKeys: Option<Keys>): { nextSessionIds: AccountId[]; sessionIds: AccountId[] } {
   const sessionIds = (queuedKeys.find(([currentId]): boolean =>
@@ -55,8 +55,9 @@ function retrieveCurr (api: ApiInterfaceRx, stashId: AccountId): Observable<Mult
   );
 }
 
-function retrieveController (api: ApiInterfaceRx, stashId: AccountId, [queuedKeys, [controllerIdOpt, nominatorsOpt, rewardDestination, [validatorPrefs], nextKeys, exposure]]: [Vec<ITuple<[AccountId, Keys]>>, MultiResult]): Observable<DerivedStakingQuery> {
+function retrieveController (api: ApiInterfaceRx, stashId: AccountId, [queuedKeys, [controllerIdOpt, nominatorsOpt, rewardDestination, validatorPrefs, nextKeys, exposure]]: [Vec<ITuple<[AccountId, Keys]>>, MultiResult]): Observable<DerivedStakingQuery> {
   const controllerId = controllerIdOpt.unwrapOr(null);
+  const nominators = nominatorsOpt.unwrapOr(null);
 
   return controllerId
     ? api.query.staking.ledger(controllerId).pipe(
@@ -64,11 +65,17 @@ function retrieveController (api: ApiInterfaceRx, stashId: AccountId, [queuedKey
         accountId: stashId,
         controllerId,
         exposure,
-        nominators: nominatorsOpt.unwrapOr([{ targets: [] }])[0].targets,
+        nominators: nominators
+          ? Array.isArray(nominators)
+            ? nominators[0].targets
+            : nominators.targets
+          : [],
         rewardDestination,
         stakingLedger: stakingLedgerOpt.unwrapOr(undefined),
         stashId,
-        validatorPrefs,
+        validatorPrefs: Array.isArray(validatorPrefs)
+          ? validatorPrefs[0]
+          : validatorPrefs,
         ...unwrapSessionIds(stashId, queuedKeys, nextKeys)
       }))
     )

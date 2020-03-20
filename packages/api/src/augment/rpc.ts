@@ -1,14 +1,17 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
-/* eslint-disable @typescript-eslint/no-empty-interface */
+/* eslint-disable */
 
 import { AnyNumber, Codec, IExtrinsic } from '@polkadot/types/types';
 import { Option, Vec } from '@polkadot/types/codec';
-import { Bytes, StorageKey, Text, bool, u32, u64 } from '@polkadot/types/primitive';
+import { Bytes, Null, StorageKey, Text, bool, u32, u64 } from '@polkadot/types/primitive';
 import { Metadata } from '@polkadot/types';
 import { ContractCallRequest, ContractExecResult } from '@polkadot/types/interfaces/contracts';
+import { CreatedBlock } from '@polkadot/types/interfaces/engine';
 import { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
+import { StorageKind } from '@polkadot/types/interfaces/offchain';
 import { BlockHash, ChainProperties, ExtrinsicOrHash, ExtrinsicStatus, Health, NetworkState, PeerInfo, RpcMethods, RuntimeDispatchInfo, RuntimeVersion } from '@polkadot/types/interfaces/rpc';
-import { AccountId, BlockNumber, H256, Hash, Header, Index, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
+import { AccountId, BlockNumber, H256, Hash, Header, Index, Justification, KeyValue, SignedBlock, StorageData } from '@polkadot/types/interfaces/runtime';
+import { NodeRole } from '@polkadot/types/interfaces/system';
 import { Observable } from 'rxjs';
 
 declare module '@polkadot/rpc-core/types.jsonrpc' {
@@ -93,6 +96,26 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        **/
       getStorage: AugmentedRpc<(address: AccountId | string | Uint8Array, key: H256 | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<Option<Bytes>>>;
     };
+    engine: {
+      /**
+       * Instructs the manual-seal authorship task to create a new block
+       **/
+      createBlock: AugmentedRpc<(createEmpty: bool | boolean | Uint8Array, finalize: bool | boolean | Uint8Array, parentHash?: BlockHash | string | Uint8Array) => Observable<CreatedBlock>>;
+      /**
+       * Instructs the manual-seal authorship task to finalize a block
+       **/
+      finalizeBlock: AugmentedRpc<(hash: BlockHash | string | Uint8Array, justification?: Justification | string | Uint8Array) => Observable<bool>>;
+    };
+    offchain: {
+      /**
+       * Get offchain local storage under given key and prefix
+       **/
+      localStorageGet: AugmentedRpc<(kind: StorageKind | ('__UNUSED' | 'PERSISTENT' | 'LOCAL') | number | Uint8Array, key: Bytes | string | Uint8Array) => Observable<Option<Bytes>>>;
+      /**
+       * Set offchain local storage under given key and prefix
+       **/
+      localStorageSet: AugmentedRpc<(kind: StorageKind | ('__UNUSED' | 'PERSISTENT' | 'LOCAL') | number | Uint8Array, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => Observable<Null>>;
+    };
     payment: {
       /**
        * Retrieves the fee information for an encoded extrinsic
@@ -139,6 +162,10 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        **/
       getMetadata: AugmentedRpc<(at?: BlockHash | string | Uint8Array) => Observable<Metadata>>;
       /**
+       * Returns the keys with prefix, leave empty to get all the keys
+       **/
+      getPairs: AugmentedRpc<(prefix: StorageKey | string | Uint8Array | any, at?: BlockHash | string | Uint8Array) => Observable<Vec<KeyValue>>>;
+      /**
        * Get the runtime version
        **/
       getRuntimeVersion: AugmentedRpc<(at?: BlockHash | string | Uint8Array) => Observable<RuntimeVersion>>;
@@ -169,6 +196,10 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
     };
     system: {
       /**
+       * Adds a reserved peer
+       **/
+      addReservedPeer: AugmentedRpc<(peer: Text | string) => Observable<Text>>;
+      /**
        * Retrieves the chain
        **/
       chain: AugmentedRpc<() => Observable<Text>>;
@@ -185,6 +216,10 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        **/
       networkState: AugmentedRpc<() => Observable<NetworkState>>;
       /**
+       * Returns the roles the node is running as
+       **/
+      nodeRoles: AugmentedRpc<() => Observable<Vec<NodeRole>>>;
+      /**
        * Returns the currently connected peers
        **/
       peers: AugmentedRpc<() => Observable<Vec<PeerInfo>>>;
@@ -192,6 +227,10 @@ declare module '@polkadot/rpc-core/types.jsonrpc' {
        * Get a custom set of properties as a JSON object, defined in the chain spec
        **/
       properties: AugmentedRpc<() => Observable<ChainProperties>>;
+      /**
+       * Remove a reserved peer
+       **/
+      removeReservedPeer: AugmentedRpc<(peerId: Text | string) => Observable<Text>>;
       /**
        * Retrieves the version of the node
        **/

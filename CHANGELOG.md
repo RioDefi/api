@@ -1,10 +1,18 @@
-# 1.7.0-beta.x
+# 1.8.0-beta.x
 
-- Add support for new Substrate `state_getKeysPaged` RPC
-- Re-add fixed (with tests) checks for query args
+- **Breaking change** The format for any custom RPCs have been changed, alongside API-internal changes to allow for better RPC management. If you are currently using custom RPCs (or planning to do so), look at the [updated documentation](https://polkadot.js.org/api/start/rpc.custom.html)
+- **Breaking change** Alongside API RPC changes, the `@polkadot/jsonrpc` package has been removed. Since it was never documented and only used internally, this should not have adverse impacts. All RPC definitions itself has now been moved to the relevant modules inside `@polkadot/types/interfaces`
+- The Substrate extrinsic phase definitions has been expanded with `Initialization` to align with the latest versions
+
+# 1.7.1 Mar 17, 2020
+
+- **Important** Current versions of Polkadot/Substrate have dropped support for linked maps on storage entries. If you are using these queries to retrieve all entries, for instance `staking.{nominators,validators}()` and using an upgraded chain, you need to swap to retrieving entries via `.entries()` or `.keys()` for the keys.
+- Pull in support and types for latest Polkadot/Substrate
+- Add support for the new Substrate `state_getKeysPaged` RPC, including use in storage keys
 - Move `derive.staking.controllers` to `derive.staking.stashes`, reflecting actual content
-- Cater for adjusted storage (non-linked maps) for `derive.staking.stashes` (with old-compat)
+- Cater for adjusted storage (non-linked mapped) for `derive.staking.stashes` queries (with old-compat)
 - Expanded `derive.staking.*` derives, including addition of `derive.staking.own*`
+- Re-add fixed (with tests) checks for query args, previously disabled in 1.6.2
 
 # 1.6.2 Mar 12, 2020
 
