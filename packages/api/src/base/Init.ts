@@ -12,7 +12,7 @@ import { LATEST_EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/Extrinsic';
 import { getMetadataTypes, getSpecTypes, getUserTypes } from '@polkadot/types/known';
 import { logger } from '@polkadot/util';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
-import chainTypes from '../chainTypes.ts'
+import chainTypes from '../chainTypes'
 
 import Decorate from './Decorate';
 
