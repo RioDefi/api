@@ -12,6 +12,7 @@ import { LATEST_EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/Extrinsic';
 import { getMetadataTypes, getSpecTypes, getUserTypes } from '@polkadot/types/known';
 import { logger } from '@polkadot/util';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
+import chainTypes from '../chainTypes.ts'
 
 import Decorate from './Decorate';
 
@@ -30,6 +31,8 @@ export default abstract class Init<ApiType extends ApiTypes> extends Decorate<Ap
     if (!this.hasSubscriptions) {
       l.warn('Api will be available in a limited mode since the provider does not support subscriptions');
     }
+
+    options.types = { ...chainTypes, ...options.types }
 
     // all injected types added to the registry for overrides
     this.registry.setKnownTypes({
