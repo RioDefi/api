@@ -4,6 +4,17 @@
 
 import { ExtDef } from './types';
 
+import EmptyCheck from './emptyCheck';
+
+const CheckMortality = {
+  extra: {
+    blockHash: 'Hash'
+  },
+  types: {
+    era: 'ExtrinsicEra'
+  }
+};
+
 export default {
   ChargeTransactionPayment: {
     extra: {},
@@ -11,29 +22,32 @@ export default {
       tip: 'Compact<Balance>'
     }
   },
-  CheckBlockGasLimit: {
-    extra: {},
-    types: {}
-  },
-  CheckEra: {
-    extra: {
-      blockHash: 'Hash'
-    },
-    types: {
-      era: 'ExtrinsicEra'
-    }
-  },
+  CheckBlockGasLimit: EmptyCheck,
+  CheckEra: CheckMortality,
   CheckGenesis: {
     extra: {
       genesisHash: 'Hash'
     },
     types: {}
   },
+  CheckMortality,
   CheckNonce: {
     extra: {},
     types: {
       nonce: 'Compact<Index>'
     }
+  },
+  CheckSpecVersion: {
+    extra: {
+      specVersion: 'u32'
+    },
+    types: {}
+  },
+  CheckTxVersion: {
+    extra: {
+      transactionVersion: 'u32'
+    },
+    types: {}
   },
   CheckVersion: {
     extra: {
@@ -41,12 +55,7 @@ export default {
     },
     types: {}
   },
-  CheckWeight: {
-    extra: {},
-    types: {}
-  },
-  LockStakingStatus: {
-    extra: {},
-    types: {}
-  }
+  CheckWeight: EmptyCheck,
+  LockStakingStatus: EmptyCheck,
+  ValidateEquivocationReport: EmptyCheck
 } as ExtDef;

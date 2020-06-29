@@ -18,12 +18,13 @@ export default function filterEvents (extHash: H256, { block: { extrinsics, head
   if (index === -1) {
     // only warn on filtering with isInBlock (finalization finalizes after)
     if (status.isInBlock) {
-      l.warn(`block ${header.hash}: Unable to find extrinsic ${myHash} inside ${allHashes}`);
+      l.warn(`block ${header.hash.toHex()}: Unable to find extrinsic ${myHash} inside ${allHashes.join(', ')}`);
     }
+
     return;
   }
 
-  return allEvents.filter(({ phase }): boolean =>
+  return allEvents.filter(({ phase }) =>
     // only ApplyExtrinsic has the extrinsic index
     phase.isApplyExtrinsic && phase.asApplyExtrinsic.eqn(index)
   );

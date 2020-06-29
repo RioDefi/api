@@ -21,10 +21,11 @@ import * as society from './society';
 import * as staking from './staking';
 import * as technicalCommittee from './technicalCommittee';
 import * as treasury from './treasury';
+import * as tx from './tx';
 
 export * from './type';
 
-export const derive = { accounts, balances, chain, contracts, council, democracy, elections, imOnline, parachains, session, society, staking, technicalCommittee, treasury };
+export const derive = { accounts, balances, chain, contracts, council, democracy, elections, imOnline, parachains, session, society, staking, technicalCommittee, treasury, tx };
 
 type DeriveSection<Section> = {
   [Method in keyof Section]: Section[Method] extends AnyFunction
@@ -75,8 +76,11 @@ function injectFunctions<AllSections> (api: ApiInterfaceRx, allSections: AllSect
         .reduce((sectionAcc, _methodName): DeriveSection<typeof section> => {
           const methodName = _methodName as keyof typeof section;
           // Not sure what to do here, casting as any. Though the final types are good
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call
           const method = (section[methodName] as any)(api);
+
           // idem
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
           (sectionAcc as any)[methodName] = method;
 
           return sectionAcc;

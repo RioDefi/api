@@ -2,16 +2,22 @@
 // This software may be modified and distributed under the terms
 // of the Apache-2.0 license. See the LICENSE file for details.
 
+import type BN from 'bn.js';
+
 import { ChainProperties } from '../interfaces/system';
-import { OverrideModuleType } from '../known/types';
 import { CallFunction } from './calls';
 import { Codec, Constructor } from './codec';
 import { AnyJson } from './helpers';
 
-import BN from 'bn.js';
-
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface InterfaceTypes { }
+
+export interface OverrideVersionedType {
+  minmax: [number?, number?]; // min (v >= min) and max (v <= max)
+  types: RegistryTypes;
+}
+
+export type OverrideModuleType = Record<string, string>;
 
 export type RegistryTypes = Record<string, Constructor | string | Record<string, string> | { _enum: string[] | Record<string, string | null> } | { _set: Record<string, number> }>;
 
@@ -106,15 +112,16 @@ export interface Registry {
   readonly chainSS58: number | undefined;
   readonly chainToken: string;
   readonly knownTypes: RegisteredTypes;
+  readonly signedExtensions: string[];
 
   findMetaCall (callIndex: Uint8Array): CallFunction;
-  findMetaError (errorIndex: Uint8Array): any;
+  findMetaError (errorIndex: Uint8Array): RegistryError;
   // due to same circular imports where types don't really want to import from EventData,
   // keep this as a generic Codec, however the actual impl. returns the correct
   findMetaEvent (eventIndex: Uint8Array): Constructor<any>;
 
   createClass <K extends keyof InterfaceTypes> (type: K): Constructor<InterfaceTypes[K]>;
-  createType <K extends keyof InterfaceTypes> (type: K, ...params: any[]): InterfaceTypes[K];
+  createType <K extends keyof InterfaceTypes> (type: K, ...params: unknown[]): InterfaceTypes[K];
   get <T extends Codec = Codec> (name: string, withUnknown?: boolean): Constructor<T> | undefined;
   getChainProperties (): ChainProperties | undefined;
   getDefinition (name: string): string | undefined;
@@ -130,5 +137,6 @@ export interface Registry {
   register (name: string, type: Constructor): void;
   register (arg1: string | Constructor | RegistryTypes, arg2?: Constructor): void;
   setChainProperties (properties?: ChainProperties): void;
-  setMetadata (metadata: RegistryMetadata): void;
+  setMetadata (metadata: RegistryMetadata, signedExtensions?: string[]): void;
+  setSignedExtensions (signedExtensions?: string[]): void;
 }

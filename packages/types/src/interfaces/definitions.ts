@@ -24,9 +24,11 @@ export { default as identity } from './identity/definitions';
 export { default as imOnline } from './imOnline/definitions';
 export { default as offences } from './offences/definitions';
 export { default as recovery } from './recovery/definitions';
+export { default as scheduler } from './scheduler/definitions';
 export { default as session } from './session/definitions';
 export { default as society } from './society/definitions';
 export { default as staking } from './staking/definitions';
+export { default as support } from './support/definitions';
 export { default as system } from './system/definitions';
 export { default as treasury } from './treasury/definitions';
 export { default as txpayment } from './txpayment/definitions';
@@ -43,9 +45,9 @@ export { default as metadata } from './metadata/definitions';
 export { default as rpc } from './rpc/definitions';
 
 // rpc-only definitions
-export { default as account } from './account/definitions';
 export { default as author } from './author/definitions';
 export { default as chain } from './chain/definitions';
+export { default as childstate } from './childstate/definitions';
 export { default as offchain } from './offchain/definitions';
 export { default as payment } from './payment/definitions';
 export { default as state } from './state/definitions';

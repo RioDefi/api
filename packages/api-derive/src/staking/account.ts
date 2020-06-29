@@ -3,12 +3,12 @@
 // of the Apache-2.0 license. See the LICENSE file for details.
 
 import { ApiInterfaceRx } from '@polkadot/api/types';
-import { Balance, BlockNumber, StakingLedger, UnlockChunk } from '@polkadot/types/interfaces';
-import { DerivedSessionInfo, DerivedStakingAccount, DerivedStakingQuery, DerivedUnlocking } from '../types';
+import { Balance, StakingLedger, UnlockChunk } from '@polkadot/types/interfaces';
+import { DeriveSessionInfo, DeriveStakingAccount, DeriveStakingQuery, DeriveUnlocking } from '../types';
 
 import BN from 'bn.js';
-import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 import { isUndefined } from '@polkadot/util';
 
@@ -21,33 +21,19 @@ function groupByEra (list: UnlockChunk[]): Record<string, BN> {
 
     map[key] = !map[key]
       ? value.unwrap()
-      : map[key].add(value.unwrap());
+      : map[key].iadd(value.unwrap());
 
     return map;
   }, {});
 }
 
-// calculate the remaining blocks in a specific unlock era
-function remainingBlocks (api: ApiInterfaceRx, era: BN, sessionInfo: DerivedSessionInfo): BlockNumber {
-  const remaining = era.sub(sessionInfo.currentEra);
-
-  // on the Rust side the current-era >= era-for-unlock (removal done on >)
-  return api.registry.createType('BlockNumber', remaining.gtn(0)
-    ? remaining
-      .subn(1)
-      .mul(sessionInfo.eraLength)
-      .add(sessionInfo.eraLength.sub(sessionInfo.eraProgress))
-    : 0
-  );
-}
-
-function calculateUnlocking (api: ApiInterfaceRx, stakingLedger: StakingLedger | undefined, sessionInfo: DerivedSessionInfo): DerivedUnlocking[] | undefined {
+function calculateUnlocking (api: ApiInterfaceRx, stakingLedger: StakingLedger | undefined, sessionInfo: DeriveSessionInfo): DeriveUnlocking[] | undefined {
   if (isUndefined(stakingLedger)) {
     return undefined;
   }
 
-  const unlockingChunks = stakingLedger.unlocking.filter(({ era }): boolean =>
-    remainingBlocks(api, era.unwrap(), sessionInfo).gtn(0)
+  const unlockingChunks = stakingLedger.unlocking.filter(({ era }) =>
+    era.unwrap().gt(sessionInfo.activeEra)
   );
 
   if (!unlockingChunks.length) {
@@ -56,27 +42,29 @@ function calculateUnlocking (api: ApiInterfaceRx, stakingLedger: StakingLedger |
 
   // group the unlock chunks that have the same era and sum their values
   const groupedResult = groupByEra(unlockingChunks);
-  const results = Object.entries(groupedResult).map(([eraString, value]): DerivedUnlocking => ({
-    value: api.registry.createType('Balance', value),
-    remainingBlocks: remainingBlocks(api, new BN(eraString), sessionInfo)
+  const results = Object.entries(groupedResult).map(([eraString, value]): DeriveUnlocking => ({
+    remainingEras: new BN(eraString).isub(sessionInfo.activeEra),
+    value: api.registry.createType('Balance', value)
   }));
 
-  return results.length ? results : undefined;
+  return results.length
+    ? results
+    : undefined;
 }
 
-function redeemableSum (api: ApiInterfaceRx, stakingLedger: StakingLedger | undefined, sessionInfo: DerivedSessionInfo): Balance {
+function redeemableSum (api: ApiInterfaceRx, stakingLedger: StakingLedger | undefined, sessionInfo: DeriveSessionInfo): Balance {
   if (isUndefined(stakingLedger)) {
     return api.registry.createType('Balance');
   }
 
   return api.registry.createType('Balance', stakingLedger.unlocking.reduce((total, { era, value }): BN => {
-    return remainingBlocks(api, era.unwrap(), sessionInfo).eqn(0)
-      ? total.add(value.unwrap())
+    return sessionInfo.activeEra.gte(era.unwrap())
+      ? total.iadd(value.unwrap())
       : total;
   }, new BN(0)));
 }
 
-function parseResult (api: ApiInterfaceRx, sessionInfo: DerivedSessionInfo, query: DerivedStakingQuery): DerivedStakingAccount {
+function parseResult (api: ApiInterfaceRx, sessionInfo: DeriveSessionInfo, query: DeriveStakingQuery): DeriveStakingAccount {
   return {
     ...query,
     redeemable: redeemableSum(api, query.stakingLedger, sessionInfo),
@@ -85,15 +73,27 @@ function parseResult (api: ApiInterfaceRx, sessionInfo: DerivedSessionInfo, quer
 }
 
 /**
+ * @description From a list of stashes, fill in all the relevant staking details
+ */
+export function accounts (api: ApiInterfaceRx): (accountIds: (Uint8Array | string)[]) => Observable<DeriveStakingAccount[]> {
+  return memo((accountIds: (Uint8Array | string)[]): Observable<DeriveStakingAccount[]> =>
+    api.derive.session.info().pipe(
+      switchMap((sessionInfo) =>
+        api.derive.staking.queryMulti(accountIds).pipe(
+          map((queries) => queries.map((query) => parseResult(api, sessionInfo, query)))
+        )
+      )
+    )
+  );
+}
+
+/**
  * @description From a stash, retrieve the controllerId and fill in all the relevant staking details
  */
-export function account (api: ApiInterfaceRx): (accountId: Uint8Array | string) => Observable<DerivedStakingAccount> {
-  return memo((accountId: Uint8Array | string): Observable<DerivedStakingAccount> =>
-    combineLatest([
-      api.derive.session.info(),
-      api.derive.staking.query(accountId)
-    ]).pipe(
-      map(([sessionInfo, query]: [DerivedSessionInfo, DerivedStakingQuery]) =>
-        parseResult(api, sessionInfo, query))
-    ));
+export function account (api: ApiInterfaceRx): (accountId: Uint8Array | string) => Observable<DeriveStakingAccount> {
+  return memo((accountId: Uint8Array | string): Observable<DeriveStakingAccount> =>
+    api.derive.staking.accounts([accountId]).pipe(
+      map(([first]) => first)
+    )
+  );
 }

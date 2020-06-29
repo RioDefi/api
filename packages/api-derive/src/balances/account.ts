@@ -4,17 +4,18 @@
 
 import { AccountId, AccountData, AccountIndex, AccountInfo, Address, Balance, Index } from '@polkadot/types/interfaces';
 import { ITuple } from '@polkadot/types/types';
-import { DerivedBalancesAccount } from '../types';
+import { DeriveBalancesAccount } from '../types';
 
 import { Observable, combineLatest, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ApiInterfaceRx } from '@polkadot/api/types';
+import { isFunction } from '@polkadot/util';
 
 import { memo } from '../util';
 
 type Result = [Balance, Balance, Balance, Balance, Index];
 
-function calcBalances (api: ApiInterfaceRx, [accountId, [freeBalance, reservedBalance, frozenFee, frozenMisc, accountNonce]]: [AccountId, Result]): DerivedBalancesAccount {
+function calcBalances (api: ApiInterfaceRx, [accountId, [freeBalance, reservedBalance, frozenFee, frozenMisc, accountNonce]]: [AccountId, Result]): DeriveBalancesAccount {
   return {
     accountId,
     accountNonce,
@@ -44,7 +45,7 @@ function queryBalancesAccount (api: ApiInterfaceRx, accountId: AccountId): Obser
     [api.query.balances.account, accountId],
     [api.query.system.accountNonce, accountId]
   ]).pipe(
-    map(([{ free, reserved, miscFrozen, feeFrozen }, accountNonce]): Result =>
+    map(([{ feeFrozen, free, miscFrozen, reserved }, accountNonce]): Result =>
       [free, reserved, feeFrozen, miscFrozen, accountNonce]
     )
   );
@@ -54,7 +55,7 @@ function queryCurrent (api: ApiInterfaceRx, accountId: AccountId): Observable<Re
   // AccountInfo is current, support old, eg. Edgeware
   return api.query.system.account<AccountInfo | ITuple<[Index, AccountData]>>(accountId).pipe(
     map((infoOrTuple): Result => {
-      const { free, reserved, miscFrozen, feeFrozen } = (infoOrTuple as AccountInfo).nonce
+      const { feeFrozen, free, miscFrozen, reserved } = (infoOrTuple as AccountInfo).nonce
         ? (infoOrTuple as AccountInfo).data
         : (infoOrTuple as [Index, AccountData])[1];
       const accountNonce = (infoOrTuple as AccountInfo).nonce || (infoOrTuple as [Index, AccountData])[0];
@@ -79,22 +80,22 @@ function queryCurrent (api: ApiInterfaceRx, accountId: AccountId): Observable<Re
  * });
  * ```
  */
-export function account (api: ApiInterfaceRx): (address: AccountIndex | AccountId | Address | string) => Observable<DerivedBalancesAccount> {
-  return memo((address: AccountIndex | AccountId | Address | string): Observable<DerivedBalancesAccount> =>
+export function account (api: ApiInterfaceRx): (address: AccountIndex | AccountId | Address | string) => Observable<DeriveBalancesAccount> {
+  return memo((address: AccountIndex | AccountId | Address | string): Observable<DeriveBalancesAccount> =>
     api.derive.accounts.info(address).pipe(
       switchMap(({ accountId }): Observable<[AccountId, Result]> =>
         (accountId
           ? combineLatest([
             of(accountId),
-            api.query.system.account
+            isFunction(api.query.system.account)
               ? queryCurrent(api, accountId)
-              : api.query.balances.account
+              : isFunction(api.query.balances.account)
                 ? queryBalancesAccount(api, accountId)
                 : queryBalancesFree(api, accountId)
           ])
           : of([api.registry.createType('AccountId'), [api.registry.createType('Balance'), api.registry.createType('Balance'), api.registry.createType('Balance'), api.registry.createType('Balance'), api.registry.createType('Index')]])
         )
       ),
-      map((result): DerivedBalancesAccount => calcBalances(api, result))
+      map((result): DeriveBalancesAccount => calcBalances(api, result))
     ));
 }

@@ -9,7 +9,7 @@ export interface JsonRpcObject {
 
 export interface JsonRpcRequest extends JsonRpcObject {
   method: string;
-  params: any[];
+  params: unknown[];
 }
 
 export interface JsonRpcResponseBaseError {
@@ -20,15 +20,15 @@ export interface JsonRpcResponseBaseError {
 
 interface JsonRpcResponseSingle {
   error?: JsonRpcResponseBaseError;
-  result?: any;
+  result?: unknown;
 }
 
 interface JsonRpcResponseSubscription {
   method?: string;
   params: {
     error?: JsonRpcResponseBaseError;
-    result: any;
-    subscription: number;
+    result: unknown;
+    subscription: number | string;
   };
 }
 
@@ -49,6 +49,6 @@ export interface ProviderInterface {
   isConnected (): boolean;
   on (type: ProviderInterfaceEmitted, sub: ProviderInterfaceEmitCb): () => void;
   send (method: string, params: any[]): Promise<any>;
-  subscribe (type: string, method: string, params: any[], cb: ProviderInterfaceCallback): Promise<number>;
-  unsubscribe (type: string, method: string, id: number): Promise<boolean>;
+  subscribe (type: string, method: string, params: any[], cb: ProviderInterfaceCallback): Promise<number | string>;
+  unsubscribe (type: string, method: string, id: number | string): Promise<boolean>;
 }

@@ -123,7 +123,7 @@ export default class Enum extends Base<Codec> {
 
   private _isBasic: boolean;
 
-  constructor (registry: Registry, def: Record<string, keyof InterfaceTypes | Constructor> | string[], value?: any, index?: number) {
+  constructor (registry: Registry, def: Record<string, keyof InterfaceTypes | Constructor> | string[], value?: unknown, index?: number) {
     const defInfo = extractDef(registry, def);
     const decoded = decodeEnum(registry, defInfo.def, value, index);
 
@@ -137,7 +137,7 @@ export default class Enum extends Base<Codec> {
 
   public static with (Types: Record<string, keyof InterfaceTypes | Constructor> | string[]): EnumConstructor<Enum> {
     return class extends Enum {
-      constructor (registry: Registry, value?: any, index?: number) {
+      constructor (registry: Registry, value?: unknown, index?: number) {
         super(registry, Types, value, index);
 
         Object.keys(this._def).forEach((_key): void => {
@@ -146,6 +146,7 @@ export default class Enum extends Base<Codec> {
           const iskey = `is${name}`;
 
           // do not clobber existing properties on the object
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (isUndefined((this as any)[iskey])) {
             Object.defineProperty(this, iskey, {
               enumerable: true,
@@ -153,10 +154,12 @@ export default class Enum extends Base<Codec> {
             });
           }
 
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (isUndefined((this as any)[askey])) {
             Object.defineProperty(this, askey, {
               enumerable: true,
               get: (): Codec => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 assert((this as any)[iskey], `Cannot convert '${this.type}' via ${askey}`);
 
                 return this.value;
@@ -172,7 +175,7 @@ export default class Enum extends Base<Codec> {
    * @description The length of the value when encoded as a Uint8Array
    */
   public get encodedLength (): number {
-    return 1 + this.raw.encodedLength;
+    return 1 + this._raw.encodedLength;
   }
 
   /**
@@ -200,7 +203,7 @@ export default class Enum extends Base<Codec> {
    * @description Checks if the Enum points to a [[Null]] type (deprecated, use isNone)
    */
   public get isNull (): boolean {
-    return this.raw instanceof Null;
+    return this._raw instanceof Null;
   }
 
   /**
@@ -228,13 +231,13 @@ export default class Enum extends Base<Codec> {
    * @description The value of the enum
    */
   public get value (): Codec {
-    return this.raw;
+    return this._raw;
   }
 
   /**
    * @description Compares the value of the input to see if there is a match
    */
-  public eq (other?: any): boolean {
+  public eq (other?: unknown): boolean {
     // cater for the case where we only pass the enum index
     if (isNumber(other)) {
       return this.toNumber() === other;
@@ -267,7 +270,7 @@ export default class Enum extends Base<Codec> {
   public toHuman (isExtended?: boolean): AnyJson {
     return this._isBasic
       ? this.type
-      : { [this.type]: this.raw.toHuman(isExtended) };
+      : { [this.type]: this._raw.toHuman(isExtended) };
   }
 
   /**
@@ -276,7 +279,7 @@ export default class Enum extends Base<Codec> {
   public toJSON (): AnyJson {
     return this._isBasic
       ? this.type
-      : { [this.type]: this.raw.toJSON() };
+      : { [this.type]: this._raw.toJSON() };
   }
 
   /**
@@ -289,7 +292,7 @@ export default class Enum extends Base<Codec> {
   /**
    * @description Returns a raw struct representation of the enum types
    */
-  protected toRawStruct (): string[] | Record<string, string> {
+  protected _toRawStruct (): string[] | Record<string, string> {
     return this._isBasic
       ? this.defKeys
       : Struct.typesToMap(this.registry, this._def);
@@ -299,7 +302,7 @@ export default class Enum extends Base<Codec> {
    * @description Returns the base runtime type name for this instance
    */
   public toRawType (): string {
-    return JSON.stringify({ _enum: this.toRawStruct() });
+    return JSON.stringify({ _enum: this._toRawStruct() });
   }
 
   /**
@@ -320,7 +323,7 @@ export default class Enum extends Base<Codec> {
 
     return u8aConcat(
       new Uint8Array([index]),
-      this.raw.toU8a(isBare)
+      this._raw.toU8a(isBare)
     );
   }
 }

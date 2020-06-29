@@ -2,48 +2,19 @@
 // This software may be modified and distributed under the terms
 // of the Apache-2.0 license. See the LICENSE file for details.
 
-import { AccountId, AccountIndex, Balance, BalanceLock, BalanceLockTo212, BalanceOf, Bid, BidKind, BlockNumber, Hash, Index, Proposal, ProposalIndex, RegistrationJudgement, SetIndex, SocietyVote, StrikeCount, TreasuryProposal, Votes, VoteIndex, VouchingStatus } from '@polkadot/types/interfaces';
+import type BN from 'bn.js';
+import { AccountId, Balance, BalanceLock, BalanceLockTo212, BalanceOf, Bid, BidKind, BlockNumber, Hash, Index, Proposal, ProposalIndex, SetIndex, SocietyVote, StrikeCount, TreasuryProposal, Votes, VoteIndex, VouchingStatus } from '@polkadot/types/interfaces';
 
-import BN from 'bn.js';
 import { u32 } from '@polkadot/types';
 
+export * from './accounts/types';
+export * from './council/types';
 export * from './democracy/types';
 export * from './parachains/types';
 export * from './session/types';
 export * from './staking/types';
 
-export type AccountIndexes = Record<string, AccountIndex>;
-
-export interface DeriveAccountRegistration {
-  display?: string;
-  displayParent?: string;
-  email?: string;
-  image?: string;
-  legal?: string;
-  other?: Record<string, string>;
-  parent?: AccountId;
-  pgp?: string;
-  riot?: string;
-  twitter?: string;
-  web?: string;
-  judgements: RegistrationJudgement[];
-}
-
-export interface DeriveAccountFlags {
-  isCouncil: boolean;
-  isSociety: boolean;
-  isSudo: boolean;
-  isTechCommittee: boolean;
-}
-
-export interface DeriveAccountInfo extends DeriveAccountFlags {
-  accountId?: AccountId;
-  accountIndex?: AccountIndex;
-  identity: DeriveAccountRegistration;
-  nickname?: string;
-}
-
-export interface DerivedBalancesAccount {
+export interface DeriveBalancesAccount {
   accountId: AccountId;
   accountNonce: Index;
   freeBalance: Balance;
@@ -53,39 +24,42 @@ export interface DerivedBalancesAccount {
   votingBalance: Balance;
 }
 
-export interface DerivedBalancesAll extends DerivedBalancesAccount {
+export interface DeriveBalancesAll extends DeriveBalancesAccount {
   isVesting: boolean;
   lockedBalance: Balance;
   lockedBreakdown: (BalanceLock | BalanceLockTo212)[];
   availableBalance: Balance;
   votingBalance: Balance;
   vestedBalance: Balance;
+  vestedClaimable: Balance;
+  vestingLocked: Balance;
   vestingTotal: Balance;
 }
 
-export type DerivedBalancesMap = Record<string, DerivedBalancesAll>;
+export type DeriveBalancesMap = Record<string, DeriveBalancesAll>;
 
-export interface DerivedContractFees {
+export interface DeriveContractFees {
   callBaseFee: BN;
   contractFee: BN;
   creationFee: BN;
   rentByteFee: BN;
   rentDepositOffset: BN;
+  surchargeReward: BN;
   tombstoneDeposit: BN;
   transactionBaseFee: BN;
   transactionByteFee: BN;
   transferFee: BN;
 }
 
-export interface DerivedCollectiveProposal {
+export interface DeriveCollectiveProposal {
   hash: Hash;
   proposal: Proposal;
   votes: Votes | null;
 }
 
-export type DerivedCollectiveProposals = DerivedCollectiveProposal[];
+export type DeriveCollectiveProposals = DeriveCollectiveProposal[];
 
-export interface DerivedElectionsInfo {
+export interface DeriveElectionsInfo {
   candidates: AccountId[];
   candidateCount: u32;
   candidacyBond?: Balance;
@@ -99,7 +73,7 @@ export interface DerivedElectionsInfo {
   votingBond?: Balance;
 }
 
-export interface DerivedFees {
+export interface DeriveFees {
   creationFee: Balance;
   existentialDeposit: Balance;
   transactionBaseFee: Balance;
@@ -107,20 +81,20 @@ export interface DerivedFees {
   transferFee: Balance;
 }
 
-export interface DerivedHeartbeatAuthor {
+export interface DeriveHeartbeatAuthor {
   blockCount: u32;
   hasMessage: boolean;
   isOnline: boolean;
 }
 
-export type DerivedHeartbeats = Record<string, DerivedHeartbeatAuthor>;
+export type DeriveHeartbeats = Record<string, DeriveHeartbeatAuthor>;
 
 export interface RecentlyOffline {
   blockNumber: BlockNumber;
   count: BN;
 }
 
-export type DerivedRecentlyOffline = Record<string, RecentlyOffline[]>;
+export type DeriveRecentlyOffline = Record<string, RecentlyOffline[]>;
 
 export interface DeriveSociety {
   bids: Bid[];
@@ -148,16 +122,16 @@ export interface DeriveSocietyMember {
   vouching?: VouchingStatus;
 }
 
-export interface DerivedTreasuryProposal {
-  council: DerivedCollectiveProposal[];
+export interface DeriveTreasuryProposal {
+  council: DeriveCollectiveProposal[];
   id: ProposalIndex;
   proposal: TreasuryProposal;
 }
 
-export interface DerivedTreasuryProposals {
-  approvals: DerivedTreasuryProposal[];
+export interface DeriveTreasuryProposals {
+  approvals: DeriveTreasuryProposal[];
   proposalCount: ProposalIndex;
-  proposals: DerivedTreasuryProposal[];
+  proposals: DeriveTreasuryProposal[];
 }
 
 export interface VoterPosition {
@@ -166,4 +140,4 @@ export interface VoterPosition {
   setIndex: SetIndex;
 }
 
-export type DerivedVoterPositions = Record<string, VoterPosition>;
+export type DeriveVoterPositions = Record<string, VoterPosition>;

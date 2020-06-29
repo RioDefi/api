@@ -8,15 +8,18 @@ import { getTypeDef } from '@polkadot/types/create';
 
 import flattenUniq from './flattenUniq';
 
+type Extracted = string | Extracted[];
+
 /** @internal */
-function extractTypes (types: string[]): any[] {
-  return types.map((type): any => {
+function extractTypes (types: string[]): Extracted[] {
+  return types.map((type): Extracted => {
     const decoded = getTypeDef(type);
 
     switch (decoded.info) {
       case TypeDefInfo.Plain:
         return decoded.type;
 
+      case TypeDefInfo.BTreeSet:
       case TypeDefInfo.Compact:
       case TypeDefInfo.Option:
       case TypeDefInfo.Vec:
@@ -24,7 +27,7 @@ function extractTypes (types: string[]): any[] {
         return extractTypes([(decoded.sub as TypeDef).type]);
 
       case TypeDefInfo.BTreeMap:
-      case TypeDefInfo.BTreeSet:
+      case TypeDefInfo.HashMap:
       case TypeDefInfo.Result:
       case TypeDefInfo.Tuple:
         return extractTypes((decoded.sub as TypeDef[]).map((sub): string => sub.type));
@@ -37,12 +40,10 @@ function extractTypes (types: string[]): any[] {
 
 /** @internal */
 export default function validateTypes (registry: Registry, types: string[], throwError: boolean): void {
-  const missing = flattenUniq(extractTypes(types)).filter((type): boolean =>
-    !registry.hasType(type)
-  );
+  const missing = flattenUniq(extractTypes(types)).filter((type) => !registry.hasType(type));
 
   if (missing.length !== 0) {
-    const message = `Unknown types found, no types for ${missing}`;
+    const message = `Unknown types found, no types for ${missing.join(', ')}`;
 
     if (throwError) {
       throw new Error(message);

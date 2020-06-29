@@ -20,23 +20,23 @@ import GenericAddress from '@polkadot/types/generic/Address';
 import Vote from '@polkadot/types/generic/Vote';
 import Null from '@polkadot/types/primitive/Null';
 import * as primitiveClasses from '@polkadot/types/primitive';
-import { isChildClass, stringLowerFirst } from '@polkadot/util';
+import { isChildClass } from '@polkadot/util';
 
 import { isCompactEncodable } from './class';
 import { formatType } from './formatting';
-import { setImports, TypeImports } from './imports';
+import { setImports, ModuleTypes, TypeImports } from './imports';
 
 function arrayToStrType (arr: string[]): string {
-  return `(${arr.map((c): string => `'${c}'`).join(' | ')})`;
+  return `${arr.map((c): string => `'${c}'`).join(' | ')}`;
 }
 
 const voteConvictions = arrayToStrType(AllConvictions);
 
 // From `T`, generate `Compact<T>, Option<T>, Vec<T>`
 /** @internal */
-export function getDerivedTypes (definitions: object, type: string, primitiveName: string, imports: TypeImports): string[] {
+export function getDerivedTypes (definitions: Record<string, ModuleTypes>, type: string, primitiveName: string, imports: TypeImports): string[] {
   // `primitiveName` represents the actual primitive type our type is mapped to
-  const isCompact = isCompactEncodable((primitiveClasses as any)[primitiveName]);
+  const isCompact = isCompactEncodable((primitiveClasses as Record<string, any>)[primitiveName]);
   const def = getTypeDef(type);
 
   setImports(definitions, imports, ['Option', 'Vec', isCompact ? 'Compact' : '']);
@@ -44,20 +44,21 @@ export function getDerivedTypes (definitions: object, type: string, primitiveNam
   const types = [
     {
       info: TypeDefInfo.Option,
-      type,
-      sub: def
+      sub: def,
+      type
     },
     {
       info: TypeDefInfo.Vec,
-      type,
-      sub: def
+      sub: def,
+      type
     }
   ];
+
   if (isCompact) {
     types.unshift({
       info: TypeDefInfo.Compact,
-      type,
-      sub: def
+      sub: def,
+      type
     });
   }
 
@@ -72,13 +73,14 @@ export function getDerivedTypes (definitions: object, type: string, primitiveNam
 // - if param instanceof AbstractInt, then param: u64 | Uint8array | AnyNumber
 // etc
 /** @internal */
-export function getSimilarTypes (definitions: object, registry: Registry, _type: string, imports: TypeImports): string[] {
+export function getSimilarTypes (definitions: Record<string, ModuleTypes>, registry: Registry, _type: string, imports: TypeImports): string[] {
   const typeParts = _type.split('::');
   const type = typeParts[typeParts.length - 1];
   const possibleTypes = [type];
 
   if (type === 'Extrinsic') {
     setImports(definitions, imports, ['IExtrinsic']);
+
     return ['IExtrinsic'];
   } else if (type === 'StorageKey') {
     // TODO We can do better
@@ -110,7 +112,7 @@ export function getSimilarTypes (definitions: object, registry: Registry, _type:
       possibleTypes.push(arrayToStrType(e.defKeys), 'number');
     } else {
       // TODO We don't really want any here, these should be expanded
-      possibleTypes.push(...e.defKeys.map((key): string => `{ ${stringLowerFirst(key)}: any }`), 'string');
+      possibleTypes.push(...e.defKeys.map((key): string => `{ ${key}: any }`), 'string');
     }
 
     possibleTypes.push('Uint8Array');
