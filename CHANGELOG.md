@@ -1,9 +1,18 @@
 # CHANGELOG
 
-## 1.22.0-beta.x
+## 1.23.0-beta.x
 
+- Adjust `<Codec>.toRawType()` to use registry name as available
+- Update ProxyType for Kusama, Polkadot & Westend with `IdentityJudgement`
+
+## 1.22.1 Jun 30, 2020
+
+- **Important** Substrate changed the treasury tip structure, on older chains supply `OpenTip: 'OpenTipTo225'`
+- Allow for `[u8; 33]` in U8aFixed (Thanks to https://github.com/akru)
 - Improve derive accountId -> accountIndex lookups (optimize entries queries)
 - Vesting balance calculations via `derive.balances.all` has been updated for locks
+- Add derive for multi staking rewards with specified eras
+- `@polkadot/util` 2.16
 
 ## 1.21.1 Jun 23, 2020
 

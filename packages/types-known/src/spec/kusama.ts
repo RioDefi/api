@@ -4,6 +4,15 @@
 
 import { OverrideVersionedType } from '@polkadot/types/types';
 
+const sharedTypes = {
+  Address: 'AccountId',
+  Keys: 'SessionKeys5',
+  LookupSource: 'AccountId',
+  ProxyType: {
+    _enum: ['Any', 'NonTransfer', 'Governance', 'Staking', 'IdentityJudgement']
+  }
+};
+
 const versioned: OverrideVersionedType[] = [
   {
     // 1020 is first CC3
@@ -16,6 +25,7 @@ const versioned: OverrideVersionedType[] = [
       Keys: 'SessionKeys5',
       LookupSource: 'Address',
       Multiplier: 'Fixed64',
+      OpenTip: 'OpenTipTo225',
       ReferendumInfo: 'ReferendumInfoTo239',
       SlashingSpans: 'SlashingSpansTo204',
       StakingLedger: 'StakingLedgerTo223',
@@ -32,6 +42,7 @@ const versioned: OverrideVersionedType[] = [
       Keys: 'SessionKeys5',
       LookupSource: 'Address',
       Multiplier: 'Fixed64',
+      OpenTip: 'OpenTipTo225',
       ReferendumInfo: 'ReferendumInfoTo239',
       SlashingSpans: 'SlashingSpansTo204',
       StakingLedger: 'StakingLedgerTo223',
@@ -49,6 +60,7 @@ const versioned: OverrideVersionedType[] = [
       Keys: 'SessionKeys5',
       LookupSource: 'Address',
       Multiplier: 'Fixed64',
+      OpenTip: 'OpenTipTo225',
       ReferendumInfo: 'ReferendumInfoTo239',
       StakingLedger: 'StakingLedgerTo223',
       Votes: 'VotesTo230',
@@ -59,11 +71,10 @@ const versioned: OverrideVersionedType[] = [
     minmax: [1046, 1054],
     types: {
       // Indices optional, not in transaction
-      Address: 'AccountId',
+      ...sharedTypes,
       DispatchInfo: 'DispatchInfoTo244',
-      Keys: 'SessionKeys5',
-      LookupSource: 'AccountId',
       Multiplier: 'Fixed64',
+      OpenTip: 'OpenTipTo225',
       ReferendumInfo: 'ReferendumInfoTo239',
       StakingLedger: 'StakingLedgerTo240',
       Weight: 'u32'
@@ -72,11 +83,10 @@ const versioned: OverrideVersionedType[] = [
   {
     minmax: [1055, 1056],
     types: {
-      Address: 'AccountId',
+      ...sharedTypes,
       DispatchInfo: 'DispatchInfoTo244',
-      Keys: 'SessionKeys5',
-      LookupSource: 'AccountId',
       Multiplier: 'Fixed64',
+      OpenTip: 'OpenTipTo225',
       StakingLedger: 'StakingLedgerTo240',
       Weight: 'u32'
     }
@@ -84,18 +94,22 @@ const versioned: OverrideVersionedType[] = [
   {
     minmax: [1057, 1061],
     types: {
-      Address: 'AccountId',
+      ...sharedTypes,
       DispatchInfo: 'DispatchInfoTo244',
-      Keys: 'SessionKeys5',
-      LookupSource: 'AccountId'
+      OpenTip: 'OpenTipTo225'
     }
   },
   {
-    minmax: [1062, undefined],
+    minmax: [1062, 2012],
     types: {
-      Address: 'AccountId',
-      Keys: 'SessionKeys5',
-      LookupSource: 'AccountId'
+      ...sharedTypes,
+      OpenTip: 'OpenTipTo225'
+    }
+  },
+  {
+    minmax: [2013, undefined],
+    types: {
+      ...sharedTypes
     }
   }
 ];
