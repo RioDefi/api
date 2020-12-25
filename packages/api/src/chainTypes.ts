@@ -1,229 +1,151 @@
 const defaultTypes = {
-  "FeeExchangeV1": {
-    "max_payment": "Compact<Balance>"
-  },
-  "FeeExchange": {
-    "_enum": {
-      "V1": "Compact<FeeExchangeV1>"
+    "Amount": "i128",
+    "AmountOf": "Amount",
+    "CurrencyId": "u32",
+    "CurrencyIdOf": "CurrencyId",
+    "Price": "FixedU128",
+    "OracleKey": "CurrencyId",
+    "Chain": {
+        "_enum": [
+            "Rio",
+            "Bitcoin",
+            "Litecoin",
+            "Ethereum",
+            "EOS",
+            "Polkadot",
+            "Kusama",
+            "ChainX"
+        ]
+    },
+    "AssetInfo": {
+        "chain": "Chain",
+        "symbol": "Text",
+        "name": "Text",
+        "decimals": "u8",
+        "desc": "Text"
+    },
+    "FeeExchangeV1": {
+        "max_payment": "Compact<Balance>"
+    },
+    "FeeExchange": {
+        "_enum": {
+            "V1": "Compact<FeeExchangeV1>"
+        }
+    },
+    "Restriction": {
+        "_enum": [
+            "Transferable",
+            "Depositable",
+            "Withdrawable",
+            "Slashable",
+            "Reservable",
+            "Unreservable"
+        ]
+    },
+    "TxHash": "H256",
+    "Deposit": {
+        "account_id": "AccountId",
+        "amount": "Balance"
+    },
+    "Auths": {
+        "mask": "u8"
+    },
+    "Auth": {
+        "_enum": [
+            "Register",
+            "Deposit",
+            "Withdraw",
+            "Sudo"
+        ]
+    },
+    "WithdrawState": {
+        "_enum": {
+            "Pending":  null,
+            "Cancelled": null,
+            "Rejected": null,
+            "Approved": null,
+            "Success": "TxHash",
+            "ReBroadcasted": "TxHash"
+        }
+    },
+    "ChainAddress": "Bytes",
+    "Memo": "Text",
+    "WithdrawInfo": {
+        "currency_id": "CurrencyId",
+        "who": "AccountId",
+        "value": "Balance",
+        "addr": "ChainAddress",
+        "memo": "Text"
+    },
+    "WithdrawItem": {
+        "currency_id": "CurrencyId",
+        "applicant": "AccountId",
+        "value": "Balance",
+        "addr": "ChainAddress",
+        "memo": "Text",
+        "state": "WithdrawState"
+    },
+    "DepositAddrInfo": {
+        "_enum": {
+            "Bip32": "Bip32",
+            "Create2": "Create2"
+        }
+    },
+    "Bip32": {
+        "x_pub": "Text",
+        "path": "Text"
+    },
+    "Create2": {
+        "creator_address": "Vec<u8>",
+        "implementation_address": "Vec<u8>",
+        "vault_address": "Vec<u8>"
+    },
+    "String": "Text",
+    "WithdrawItemForRpc": {
+        "currencyId": "CurrencyId",
+        "applicant": "AccountId",
+        "value": "String",
+        "addr": "String",
+        "memo": "String",
+        "state": "WithdrawState",
+        "fee": "String"
+    },
+    "AccountDepositAddr": {
+        "deposit_addr_info": "DepositAddrInfo",
+        "index": "Option<u64>"
+    },
+    "riogateway": {
+        "withdrawList": {
+            "description": "get current withdraw list(include pending and approve)",
+            "params": [
+                {
+                    "name": "at",
+                    "isOptional": true
+                }
+            ],
+            "type": "BTreeMap<u64, WithdrawItemForRpc>"
+        },
+        "pendingWithdrawList": {
+            "description": "get current pending withdraw list",
+            "params": [
+                {
+                    "name": "at",
+                    "isOptional": true
+                }
+            ],
+            "type": "BTreeMap<u64, WithdrawItemForRpc>"
+        },
+        "depositAddress": {
+            "description": "get deposit address info for an account and asset, if this account have not apply, in bip32 path would return `nil`",
+            "params": [
+                {
+                    "name": "at",
+                    "who": "AccountId",
+                    "currency_id": "CurrencyId",
+                    "isOptional": true
+                }
+            ],
+            "type": "DepositAddrForRpc"
+        }
     }
-  },
-  "Restriction": {
-    "_enum": [
-      "Transferable"
-    ]
-  },
-  "DclCoinSymbol": {
-    "_enum": [
-      "USDT",
-      "EMC",
-      "ELC",
-      "ETG"
-    ]
-  },
-  "VipLevelPrice": {
-    "amount": "Balance",
-    "asset_id": "AssetId"
-  },
-  "DclAuth": {
-    "_enum": [
-      "All",
-      "AddCoin",
-      "Task",
-      "None"
-    ]
-  },
-  "VipLevel": {
-    "_enum": [
-      "Normal",
-      "Level1",
-      "Level2",
-      "Level3",
-      "Level4",
-      "Level5",
-      "Level6"
-    ]
-  },
-  "TxHash": "H256",
-  "Deposit": {
-    "account_id": "AccountId",
-    "tx_hash": "Option<TxHash>",
-    "amount": "Balance"
-  },
-  "Auth": {
-    "_enum": [
-      "All",
-      "Deposit",
-      "Withdraw",
-      "Refund",
-      "Mark"
-    ]
-  },
-  "BlackOrWhite": {
-    "_enum": [
-      "Black",
-      "White"
-    ]
-  },
-  "ExtrinsicIndex": "u32",
-  "LineNumber": "u32",
-  "AuctionBalance": "Balance",
-  "TotalLoanBalance": "Balance",
-  "CollateralBalanceAvailable": "Balance",
-  "CollateralBalanceOriginal": "Balance",
-  "Price": "u128",
-  "PriceReport": {
-    "reporter": "AccountId",
-    "price": "Price"
-  },
-  "LTV": "u64",
-  "LoanId": "u64",
-  "LoanPackageId": "u64",
-  "PhaseId": "u32",
-  "LoanHealth": {
-    "_enum": {
-      "Well": null,
-      "Warning": "LTV",
-      "Liquidating": "LTV",
-      "Extended": null,
-      "Expired": null
-    }
-  },
-  "LoanPackageStatus": {
-    "_enum": [
-      "Active",
-      "Inactive"
-    ]
-  },
-  "Loan": {
-    "id": "LoanId",
-    "package_id": "LoanPackageId",
-    "who": "AccountId",
-    "due": "Moment",
-    "due_extend": "Moment",
-    "collateral_balance_original": "Balance",
-    "collateral_balance_available": "Balance",
-    "loan_balance_total": "Balance",
-    "status": "LoanHealth"
-  },
-  "LoanPackage": {
-    "id": "LoanPackageId",
-    "status": "LoanPackageStatus",
-    "terms": "u32",
-    "min": "Balance",
-    "interest_rate_hourly": "u32",
-    "collateral_asset_id": "AssetId",
-    "loan_asset_id": "AssetId"
-  },
-  "SharePackage": {
-    "terms_total": "u32",
-    "terms_left": "u32",
-    "per_term": "Balance"
-  },
-  "ReleaseTrigger": {
-    "_enum": {
-      "PhaseChange": null,
-      "BlockNumber": "BlockNumber"
-    }
-  },
-  "ShareReleasePack": {
-    "asset_id": "AssetId",
-    "phase_id": "PhaseId",
-    "owner": "AccountId",
-    "empty": "bool",
-    "major": "SharePackage",
-    "minor": "Option<SharePackage>",
-    "release_trigger": "ReleaseTrigger"
-  },
-  "PhaseInfo": {
-    "id": "PhaseId",
-    "quota": "u128",
-    "exchange": "u128",
-    "iou_asset_id": "Option<u32>"
-  },
-  "GameWay": "u32",
-  "RoundId": "u64",
-  "GameControlItem": {
-    "paused": "bool",
-    "time_stamp": "Moment",
-    "duration": "u32",
-    "wait_time": "u32"
-  },
-  "BetItem": {
-    "account_id": "AccountId",
-    "amount": "Balance",
-    "asset_id": "AssetId",
-    "is_root": "bool"
-  },
-  "BetType": {
-    "_enum": [
-      "Short",
-      "Long"
-    ]
-  },
-  "BillingType": {
-    "_enum": [
-      "Win",
-      "Lose",
-      "Unchanging"
-    ]
-  },
-  "BetPriceLimit": {
-    "min_bet": "Balance",
-    "max_bet": "Balance"
-  },
-  "GameChangeType": {
-    "_enum": [
-      "Add",
-      "Update",
-      "Unchanging"
-    ]
-  },
-  "GameWayInfo": {
-    "game_way": "GameWay",
-    "asset_id": "AssetId",
-    "duration": "u32",
-    "wait_time": "u32"
-  },
-  "GameStatusType": {
-    "_enum": [
-      "Begin",
-      "End",
-      "Paused",
-      "Restart",
-      "Unchanging"
-    ]
-  },
-  "RecommendStatusType": {
-    "_enum": [
-      "Success",
-      "Failure",
-      "Binded",
-      "Unchanging"
-    ]
-  },
-  "ETHAddress": "H160",
-  "ETHAuth": {
-    "_enum": [
-      "All",
-      "Create",
-      "Deposit",
-      "Withdraw",
-      "Refund",
-      "Mark",
-      "KYC"
-    ]
-  },
-  "ERC20Token": {
-    "asset_id": "AssetId",
-    "contract_addr": "ETHAddress",
-    "decimal": "u32",
-    "total_supply": "Option<Balance>"
-  },
-  "ERC20TokenDeposit": {
-    "account_id": "AccountId",
-    "tx_hash": "Option<TxHash>",
-    "amount": "Balance"
-  }
 }
-
-export default defaultTypes
