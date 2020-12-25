@@ -1,9 +1,7 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import Int from '../codec/Int';
-import CodecSet from '../codec/Set';
+import { CodecSet, Int } from '../codec';
 import { createClass, createTypeUnsafe, TypeRegistry } from '.';
 
 describe('createType', (): void => {
@@ -35,7 +33,7 @@ describe('createType', (): void => {
     }]);
 
     expect(struct.toJSON()).toEqual({
-      balance: 1234,
+      balance: '0x000000000000000000000000000004d2',
       index: 16
     });
     expect(struct.toRawType()).toEqual(raw);
@@ -80,7 +78,7 @@ describe('createType', (): void => {
   it('allows creation of a Tuple', (): void => {
     expect(
       createTypeUnsafe(registry, '(Balance,u32)', [[1234, 5678]]).toJSON()
-    ).toEqual([1234, 5678]);
+    ).toEqual(['0x000000000000000000000000000004d2', 5678]);
   });
 
   it('allows creation for a UInt<bitLength>', (): void => {

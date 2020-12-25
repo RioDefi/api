@@ -1,44 +1,31 @@
 {
   "name": "@polkadot/rpc-provider",
-  "version": "1.23.0-beta.3",
+  "version": "3.1.2-7",
   "description": "Transport providers for the API",
   "main": "index.js",
-  "keywords": [
-    "Polkadot",
-    "JsonRPC"
-  ],
+  "module": "index.mjs",
+  "sideEffects": false,
   "author": "Jaco Greeff <jacogr@gmail.com>",
-  "maintainers": [
-    "Jaco Greeff <jacogr@gmail.com>"
-  ],
+  "maintainers": [],
   "contributors": [],
   "license": "Apache-2.0",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/polkadot-js/api.git"
-  },
-  "bugs": {
-    "url": "https://github.com/polkadot-js/api/issues"
-  },
+  "repository": "github:polkadot-js/api",
+  "bugs": "https://github.com/polkadot-js/api/issues",
   "homepage": "https://github.com/polkadot-js/api/tree/master/packages/rpc-provider#readme",
   "dependencies": {
-    "@babel/runtime": "^7.10.4",
-    "@polkadot/metadata": "1.23.0-beta.3",
-    "@polkadot/types": "1.23.0-beta.3",
-    "@polkadot/util": "^2.16.1",
-    "@polkadot/util-crypto": "^2.16.1",
-    "bn.js": "^5.1.2",
-    "eventemitter3": "^4.0.4",
-    "isomorphic-fetch": "^2.2.1",
-    "websocket": "^1.0.31"
+    "@babel/runtime": "^7.12.5",
+    "@polkadot/types": "3.1.2-7",
+    "@polkadot/util": "^5.1.2-1",
+    "@polkadot/util-crypto": "^5.1.2-1",
+    "@polkadot/x-fetch": "^5.1.2-1",
+    "@polkadot/x-ws": "^5.1.2-1",
+    "bn.js": "^4.11.9",
+    "eventemitter3": "^4.0.7"
   },
   "devDependencies": {
-    "@polkadot/keyring": "^2.16.1",
+    "@polkadot/keyring": "^5.1.2-1",
+    "@polkadot/metadata": "3.1.2-7",
     "mock-socket": "^9.0.3",
-    "nock": "^13.0.2"
+    "nock": "^13.0.5"
   }
 }

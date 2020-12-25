@@ -1,15 +1,15 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import type BN from 'bn.js';
-import { AccountId, Balance, BalanceLock, BalanceLockTo212, BalanceOf, Bid, BidKind, BlockNumber, Hash, Index, Proposal, ProposalIndex, SetIndex, SocietyVote, StrikeCount, TreasuryProposal, Votes, VoteIndex, VouchingStatus } from '@polkadot/types/interfaces';
-
-import { u32 } from '@polkadot/types';
+import type { u32 } from '@polkadot/types';
+import type { AccountId, Balance, BalanceLock, BalanceLockTo212, BalanceOf, Bid, BidKind, BlockNumber, Bounty, Hash, Index, Proposal, ProposalIndex, SetIndex, SocietyVote, StrikeCount, TreasuryProposal, Votes, VouchingStatus } from '@polkadot/types/interfaces';
 
 export * from './accounts/types';
+export * from './chain/types';
 export * from './council/types';
 export * from './democracy/types';
+export * from './elections/types';
 export * from './parachains/types';
 export * from './session/types';
 export * from './staking/types';
@@ -32,7 +32,9 @@ export interface DeriveBalancesAll extends DeriveBalancesAccount {
   votingBalance: Balance;
   vestedBalance: Balance;
   vestedClaimable: Balance;
+  vestingEndBlock: BlockNumber;
   vestingLocked: Balance;
+  vestingPerBlock: Balance;
   vestingTotal: Balance;
 }
 
@@ -55,22 +57,6 @@ export interface DeriveCollectiveProposal {
   hash: Hash;
   proposal: Proposal;
   votes: Votes | null;
-}
-
-export type DeriveCollectiveProposals = DeriveCollectiveProposal[];
-
-export interface DeriveElectionsInfo {
-  candidates: AccountId[];
-  candidateCount: u32;
-  candidacyBond?: Balance;
-  desiredSeats: u32;
-  members: [AccountId, Balance][];
-  nextVoterSet?: SetIndex;
-  runnersUp: [AccountId, Balance][];
-  termDuration: BlockNumber;
-  voteCount?: VoteIndex;
-  voterCount?: SetIndex;
-  votingBond?: Balance;
 }
 
 export interface DeriveFees {
@@ -141,3 +127,10 @@ export interface VoterPosition {
 }
 
 export type DeriveVoterPositions = Record<string, VoterPosition>;
+
+export interface DeriveBounty {
+  bounty: Bounty;
+  description: string;
+}
+
+export type DeriveBounties = DeriveBounty[];

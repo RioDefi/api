@@ -1,12 +1,11 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { BlockNumber } from '@polkadot/types/interfaces';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { BlockNumber } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
 
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ApiInterfaceRx } from '@polkadot/api/types';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
@@ -22,8 +21,8 @@ import { memo } from '../util';
  * });
  * ```
  */
-export function bestNumber (api: ApiInterfaceRx): () => Observable<BlockNumber> {
-  return memo((): Observable<BlockNumber> =>
+export function bestNumber (instanceId: string, api: ApiInterfaceRx): () => Observable<BlockNumber> {
+  return memo(instanceId, (): Observable<BlockNumber> =>
     api.derive.chain.subscribeNewHeads().pipe(
       map((header) => header.number.unwrap())
     ));

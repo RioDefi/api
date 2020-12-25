@@ -1,18 +1,17 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 // order important in structs... :)
 /* eslint-disable sort-keys */
 
-import { Definitions } from '../../types';
+import type { Definitions } from '../../types';
 
 export default {
   rpc: {},
   types: {
     Account: {
-      nonce: 'U256',
-      balance: 'U256'
+      nonce: 'u256',
+      balance: 'u256'
     },
     Log: {
       address: 'H160',
@@ -20,7 +19,7 @@ export default {
       data: 'Bytes'
     },
     Vicinity: {
-      gasPrice: 'U256',
+      gasPrice: 'u256',
       origin: 'H160'
     }
   }

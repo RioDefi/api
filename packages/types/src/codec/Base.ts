@@ -1,19 +1,14 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { H256 } from '../interfaces/runtime';
-import { AnyJson, BareOpts, Codec, Registry } from '../types';
-
-import { blake2AsU8a } from '@polkadot/util-crypto';
-
-import Raw from './Raw';
+import type { H256 } from '../interfaces/runtime';
+import type { AnyJson, BareOpts, Codec, Registry } from '../types';
 
 /**
  * @name Base
  * @description A type extends the Base class, when it holds a value
  */
-export default abstract class Base<T extends Codec> implements Codec {
+export abstract class Base<T extends Codec> implements Codec {
   public readonly registry: Registry;
 
   protected readonly _raw: T;
@@ -34,7 +29,7 @@ export default abstract class Base<T extends Codec> implements Codec {
    * @description returns a hash of the contents
    */
   public get hash (): H256 {
-    return new Raw(this.registry, blake2AsU8a(this.toU8a(), 256));
+    return this.registry.hash(this.toU8a());
   }
 
   /**

@@ -1,11 +1,11 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 // technically runtime can go below, but since it is the base, do it first
 export { default as runtime } from './runtime/definitions';
 
 // substrate types
+export { default as assets } from './assets/definitions';
 export { default as authorship } from './authorship/definitions';
 export { default as aura } from './aura/definitions';
 export { default as babe } from './babe/definitions';
@@ -23,12 +23,14 @@ export { default as grandpa } from './grandpa/definitions';
 export { default as identity } from './identity/definitions';
 export { default as imOnline } from './imOnline/definitions';
 export { default as offences } from './offences/definitions';
+export { default as proxy } from './proxy/definitions';
 export { default as recovery } from './recovery/definitions';
 export { default as scheduler } from './scheduler/definitions';
 export { default as session } from './session/definitions';
 export { default as society } from './society/definitions';
 export { default as staking } from './staking/definitions';
 export { default as support } from './support/definitions';
+export { default as syncstate } from './syncstate/definitions';
 export { default as system } from './system/definitions';
 export { default as treasury } from './treasury/definitions';
 export { default as txpayment } from './txpayment/definitions';
@@ -39,6 +41,15 @@ export { default as vesting } from './vesting/definitions';
 export { default as attestations } from './attestations/definitions';
 export { default as claims } from './claims/definitions';
 export { default as parachains } from './parachains/definitions';
+export { default as poll } from './poll/definitions';
+export { default as purchase } from './purchase/definitions';
+
+// scale-info & contracts
+export { default as contractsAbi } from './contractsAbi/definitions';
+export { default as scaleInfo } from './scaleInfo/definitions';
+
+// other useful types
+export { default as eth } from './eth/definitions';
 
 // pull in metadata & rpc last, assuming that is uses info from above
 export { default as metadata } from './metadata/definitions';

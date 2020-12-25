@@ -1,16 +1,15 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { AccountId, Balance, BlockNumber } from '@polkadot/types/interfaces';
-import { ITuple } from '@polkadot/types/types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { u32, Vec } from '@polkadot/types';
+import type { AccountId, Balance, BlockNumber } from '@polkadot/types/interfaces';
+import type { ITuple } from '@polkadot/types/types';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveElectionsInfo } from './types';
 
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { Vec, u32 } from '@polkadot/types';
+import { map } from '@polkadot/x-rxjs/operators';
 
-import { DeriveElectionsInfo } from '../types';
 import { memo } from '../util';
 
 function sortAccounts ([, balanceA]: ITuple<[AccountId, Balance]>, [, balanceB]: ITuple<[AccountId, Balance]>): number {
@@ -30,6 +29,7 @@ function queryElections (api: ApiInterfaceRx): Observable<DeriveElectionsInfo> {
       candidacyBond: api.consts[section].candidacyBond as Balance,
       candidateCount: api.registry.createType('u32', candidates.length),
       candidates,
+      desiredRunnersUp: api.consts[section].desiredRunnersUp as u32,
       desiredSeats: api.consts[section].desiredMembers as u32,
       members: members.length
         ? members.sort(sortAccounts)
@@ -54,6 +54,6 @@ function queryElections (api: ApiInterfaceRx): Observable<DeriveElectionsInfo> {
  * });
  * ```
  */
-export function info (api: ApiInterfaceRx): () => Observable<DeriveElectionsInfo> {
-  return memo((): Observable<DeriveElectionsInfo> => queryElections(api));
+export function info (instanceId: string, api: ApiInterfaceRx): () => Observable<DeriveElectionsInfo> {
+  return memo(instanceId, (): Observable<DeriveElectionsInfo> => queryElections(api));
 }

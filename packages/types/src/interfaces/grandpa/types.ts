@@ -1,13 +1,12 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import { ITuple } from '@polkadot/types/types';
-import { BTreeSet, Enum, Struct, Vec } from '@polkadot/types/codec';
-import { u32, u64 } from '@polkadot/types/primitive';
-import { AuthorityId } from '@polkadot/types/interfaces/consensus';
-import { AuthoritySignature } from '@polkadot/types/interfaces/imOnline';
-import { BlockNumber, Hash } from '@polkadot/types/interfaces/runtime';
-import { MembershipProof } from '@polkadot/types/interfaces/session';
+import type { BTreeSet, Bytes, Enum, Struct, Vec, u32, u64 } from '@polkadot/types';
+import type { ITuple } from '@polkadot/types/types';
+import type { AuthorityId } from '@polkadot/types/interfaces/consensus';
+import type { AuthoritySignature } from '@polkadot/types/interfaces/imOnline';
+import type { BlockNumber, Hash } from '@polkadot/types/interfaces/runtime';
+import type { MembershipProof } from '@polkadot/types/interfaces/session';
 
 /** @name AuthorityIndex */
 export interface AuthorityIndex extends u64 {}
@@ -17,6 +16,9 @@ export interface AuthorityList extends Vec<NextAuthority> {}
 
 /** @name AuthorityWeight */
 export interface AuthorityWeight extends u64 {}
+
+/** @name EncodedFinalityProofs */
+export interface EncodedFinalityProofs extends Bytes {}
 
 /** @name GrandpaEquivocation */
 export interface GrandpaEquivocation extends Enum {
@@ -45,6 +47,9 @@ export interface GrandpaPrevote extends Struct {
   readonly targetHash: Hash;
   readonly targetNumber: BlockNumber;
 }
+
+/** @name JustificationNotification */
+export interface JustificationNotification extends Bytes {}
 
 /** @name KeyOwnerProof */
 export interface KeyOwnerProof extends MembershipProof {}

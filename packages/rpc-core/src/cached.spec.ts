@@ -1,20 +1,19 @@
 // Copyright 2017-2020 @polkadot/rpc-core authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import testingPairs from '@polkadot/keyring/testingPairs';
-import MockProvider from '@polkadot/rpc-provider/mock';
-import { TypeRegistry } from '@polkadot/types';
+import { createTestPairs } from '@polkadot/keyring/testingPairs';
+import { MockProvider } from '@polkadot/rpc-provider/mock';
+import { TypeRegistry } from '@polkadot/types/create';
 
-import Rpc from '.';
+import { RpcCore } from '.';
 
 describe('Cached Observables', (): void => {
   const registry = new TypeRegistry();
-  let rpc: Rpc;
-  const keyring = testingPairs();
+  let rpc: RpcCore;
+  const keyring = createTestPairs();
 
   beforeEach((): void => {
-    rpc = new Rpc(registry, new MockProvider(registry));
+    rpc = new RpcCore('123', registry, new MockProvider(registry));
   });
 
   it('creates a single observable for subscriptions (multiple calls)', (): void => {
@@ -91,10 +90,25 @@ describe('Cached Observables', (): void => {
     expect(observable2).not.toBe(observable1);
   });
 
-  it('creates multiple observables for one-shots', (): void => {
+  it('creates single observables for subsequent one-shots', (): void => {
     const observable1 = rpc.chain.getBlockHash(123);
     const observable2 = rpc.chain.getBlockHash(123);
 
-    expect(observable2).not.toBe(observable1);
+    expect(observable2).toBe(observable1);
+  });
+
+  it('creates multiple observables for subsequent one-shots delayed', (done): void => {
+    const observable1 = rpc.chain.getBlockHash(123);
+
+    const sub = observable1.subscribe((): void => {
+      sub.unsubscribe();
+    });
+
+    expect(rpc.chain.getBlockHash(123)).toBe(observable1);
+
+    setTimeout((): void => {
+      expect(rpc.chain.getBlockHash(123)).not.toBe(observable1);
+      done();
+    }, 3500);
   });
 });

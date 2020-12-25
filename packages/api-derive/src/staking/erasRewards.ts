@@ -1,16 +1,17 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { Balance, EraIndex } from '@polkadot/types/interfaces';
-import { DeriveEraRewards } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Option } from '@polkadot/types';
+import type { Balance, EraIndex } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveEraRewards } from '../types';
 
-import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { Option } from '@polkadot/types';
+import { of } from '@polkadot/x-rxjs';
+import { map, switchMap } from '@polkadot/x-rxjs/operators';
 
 import { deriveCache, memo } from '../util';
+import { filterEras } from './util';
 
 const CACHE_KEY = 'eraRewards';
 
@@ -21,8 +22,8 @@ function mapRewards (eras: EraIndex[], optRewards: Option<Balance>[]): DeriveEra
   }));
 }
 
-export function _erasRewards (api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraRewards[]> {
-  return memo((eras: EraIndex[], withActive: boolean): Observable<DeriveEraRewards[]> => {
+export function _erasRewards (instanceId: string, api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraRewards[]> {
+  return memo(instanceId, (eras: EraIndex[], withActive: boolean): Observable<DeriveEraRewards[]> => {
     if (!eras.length) {
       return of([]);
     }
@@ -32,7 +33,7 @@ export function _erasRewards (api: ApiInterfaceRx): (eras: EraIndex[], withActiv
       : eras
         .map((era) => deriveCache.get<DeriveEraRewards>(`${CACHE_KEY}-${era.toString()}`))
         .filter((value): value is DeriveEraRewards => !!value);
-    const remaining = eras.filter((era) => !cached.some((cached) => era.eq(cached.era)));
+    const remaining = filterEras(eras, cached);
 
     if (!remaining.length) {
       return of(cached);
@@ -53,8 +54,8 @@ export function _erasRewards (api: ApiInterfaceRx): (eras: EraIndex[], withActiv
   });
 }
 
-export function erasRewards (api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraRewards[]> {
-  return memo((withActive = false): Observable<DeriveEraRewards[]> =>
+export function erasRewards (instanceId: string, api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraRewards[]> {
+  return memo(instanceId, (withActive = false): Observable<DeriveEraRewards[]> =>
     api.derive.staking.erasHistoric(withActive).pipe(
       switchMap((eras) => api.derive.staking._erasRewards(eras, withActive))
     )

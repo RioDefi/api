@@ -1,11 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import BN from 'bn.js';
 
 import { TypeRegistry } from '../create';
-import UInt from './UInt';
+import { UInt } from '.';
 
 describe('UInt', (): void => {
   const registry = new TypeRegistry();
@@ -16,10 +15,22 @@ describe('UInt', (): void => {
     ).toThrow('u32: Input too large. Found input with 164 bits, expected 32');
   });
 
+  it('fails on negative numbers', (): void => {
+    expect(
+      (): UInt => new UInt(registry, -123, 32)
+    ).toThrow('u32: Negative number passed to unsigned type');
+  });
+
   it('allows for construction via BigInt', (): void => {
     expect(
       new UInt(registry, 123456789123456789123456789n, 128).toHuman()
     ).toEqual('123,456,789,123,456,789,123,456,789');
+  });
+
+  it('provides a toBigInt interface', (): void => {
+    expect(
+      new UInt(registry, 9876543210123456789n).toBigInt()
+    ).toEqual(9876543210123456789n);
   });
 
   it('provides a toBn interface', (): void => {
@@ -61,10 +72,10 @@ describe('UInt', (): void => {
     ).toEqual(123);
   });
 
-  it('converts to JSON representation based on flags/size', (): void => {
-    expect(new UInt(registry, '0x12345678', 64, true).toJSON()).toEqual('0x0000000012345678');
-    expect(new UInt(registry, '0x1234567890', 64, false).toJSON()).toEqual(0x1234567890);
-    expect(new UInt(registry, '0x1234567890abcdef', 64, false).toJSON()).toEqual('0x1234567890abcdef');
+  it('converts to JSON representation based on size', (): void => {
+    expect(new UInt(registry, '0x12345678', 32).toJSON()).toEqual(0x12345678);
+    expect(new UInt(registry, '0x1234567890', 64).toJSON()).toEqual('0x0000001234567890');
+    expect(new UInt(registry, '0x1234567890abcdef', 64).toJSON()).toEqual('0x1234567890abcdef');
   });
 
   describe('eq', (): void => {
@@ -107,6 +118,13 @@ describe('UInt', (): void => {
       expect(
         new (UInt.with(64, 'SomethingElse'))(registry).toRawType()
       ).toEqual('SomethingElse');
+    });
+
+    it('has proper toHuman() for PerMill/PerBill/Percent/Balance', (): void => {
+      expect(registry.createType('Perbill', 12_340_000).toHuman()).toEqual('1.23%');
+      expect(registry.createType('Percent', 12).toHuman()).toEqual('12.00%');
+      expect(registry.createType('Permill', 16_900).toHuman()).toEqual('1.69%');
+      expect(registry.createType('Balance', '123456789012345').toHuman()).toEqual('123.4567 Unit');
     });
   });
 });

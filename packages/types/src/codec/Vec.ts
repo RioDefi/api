@@ -1,16 +1,16 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Codec, Constructor, InterfaceTypes, Registry } from '../types';
+import type { Codec, Constructor, InterfaceTypes, Registry } from '../types';
 
-import { u8aToU8a, assert } from '@polkadot/util';
+import { assert, compactFromU8a, logger, u8aToU8a } from '@polkadot/util';
 
-import Compact from './Compact';
+import { AbstractArray } from './AbstractArray';
 import { decodeU8a, typeToConstructor } from './utils';
-import AbstractArray from './AbstractArray';
 
-const MAX_LENGTH = 32768;
+const MAX_LENGTH = 64 * 1024;
+
+const l = logger('Vec');
 
 /**
  * @name Vec
@@ -19,7 +19,7 @@ const MAX_LENGTH = 32768;
  * construction with the passed `Type` in the constructor. It is an extension to Array, providing
  * specific encoding/decoding on top of the base type.
  */
-export default class Vec<T extends Codec> extends AbstractArray<T> {
+export class Vec<T extends Codec> extends AbstractArray<T> {
   private _Type: Constructor<T>;
 
   constructor (registry: Registry, Type: Constructor<T> | keyof InterfaceTypes, value: Vec<Codec> | Uint8Array | string | unknown[] = []) {
@@ -40,7 +40,7 @@ export default class Vec<T extends Codec> extends AbstractArray<T> {
             ? entry
             : new Type(registry, entry);
         } catch (error) {
-          console.error(`Unable to decode Vec on index ${index}`, (error as Error).message);
+          l.error(`Unable to decode on index ${index}`, (error as Error).message);
 
           throw error;
         }
@@ -48,7 +48,7 @@ export default class Vec<T extends Codec> extends AbstractArray<T> {
     }
 
     const u8a = u8aToU8a(value);
-    const [offset, length] = Compact.decodeU8a(u8a);
+    const [offset, length] = compactFromU8a(u8a);
 
     assert(length.lten(MAX_LENGTH), `Vec length ${length.toString()} exceeds ${MAX_LENGTH}`);
 

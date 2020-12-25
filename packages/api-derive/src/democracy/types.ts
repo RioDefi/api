@@ -1,25 +1,18 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import type BN from 'bn.js';
-import { AccountId, Balance, BlockNumber, Hash, Proposal, PropIndex, ReferendumInfoTo239, ReferendumStatus, Vote, ReferendumIndex, VoteThreshold } from '@polkadot/types/interfaces';
-
-import { Vec } from '@polkadot/types';
+import type { Vec } from '@polkadot/types';
+import type { AccountId, Balance, BlockNumber, Hash, PropIndex, Proposal, ReferendumIndex, ReferendumInfoTo239, ReferendumStatus, Vote, VoteThreshold } from '@polkadot/types/interfaces';
 
 export interface DeriveDemocracyLock {
   balance: Balance;
+  isDelegated: boolean;
   isFinished: boolean;
+  referendumEnd: BN;
   referendumId: ReferendumIndex;
   unlockAt: BN;
   vote: Vote;
-}
-
-export interface DeriveDispatch {
-  at: BlockNumber;
-  index: ReferendumIndex;
-  imageHash: Hash;
-  image?: DeriveProposalImage;
 }
 
 export interface DeriveProposalImage {
@@ -27,6 +20,13 @@ export interface DeriveProposalImage {
   balance: Balance;
   proposal?: Proposal;
   proposer: AccountId;
+}
+
+export interface DeriveDispatch {
+  at: BlockNumber;
+  index: ReferendumIndex;
+  imageHash: Hash;
+  image?: DeriveProposalImage;
 }
 
 export interface DeriveProposal {

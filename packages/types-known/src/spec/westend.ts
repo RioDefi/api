@@ -1,15 +1,18 @@
 // Copyright 2017-2020 @polkadot/types-known authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { OverrideVersionedType } from '@polkadot/types/types';
+/* eslint-disable sort-keys */
+
+import type { OverrideVersionedType } from '@polkadot/types/types';
 
 const sharedTypes = {
+  AccountInfo: 'AccountInfoWithRefCount',
   Address: 'AccountId',
   Keys: 'SessionKeys5',
   LookupSource: 'AccountId',
   ProxyType: {
-    _enum: ['Any', 'NonTransfer', 'Staking', 'SudoBalances', 'IdentityJudgement']
+    // was: SudoBalances
+    _enum: ['Any', 'NonTransfer', 'Staking', 'Unused', 'IdentityJudgement']
   }
 };
 
@@ -18,8 +21,11 @@ const versioned: OverrideVersionedType[] = [
     minmax: [1, 2],
     types: {
       ...sharedTypes,
+      CompactAssignments: 'CompactAssignmentsTo257',
       Multiplier: 'Fixed64',
       OpenTip: 'OpenTipTo225',
+      RefCount: 'RefCountTo259',
+      RewardDestination: 'RewardDestinationTo257',
       Weight: 'u32'
     }
   },
@@ -27,11 +33,30 @@ const versioned: OverrideVersionedType[] = [
     minmax: [3, 22],
     types: {
       ...sharedTypes,
-      OpenTip: 'OpenTipTo225'
+      CompactAssignments: 'CompactAssignmentsTo257',
+      OpenTip: 'OpenTipTo225',
+      RefCount: 'RefCountTo259',
+      RewardDestination: 'RewardDestinationTo257'
     }
   },
   {
-    minmax: [23, undefined],
+    minmax: [23, 42],
+    types: {
+      ...sharedTypes,
+      CompactAssignments: 'CompactAssignmentsTo257',
+      RefCount: 'RefCountTo259',
+      RewardDestination: 'RewardDestinationTo257'
+    }
+  },
+  {
+    minmax: [43, 44],
+    types: {
+      ...sharedTypes,
+      RefCount: 'RefCountTo259'
+    }
+  },
+  {
+    minmax: [45, undefined],
     types: {
       ...sharedTypes
     }

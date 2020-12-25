@@ -1,14 +1,14 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { EraIndex, ValidatorPrefs } from '@polkadot/types/interfaces';
-import { DeriveEraPrefs, DeriveEraValPrefs } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { StorageKey } from '@polkadot/types';
+import type { EraIndex, ValidatorPrefs } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveEraPrefs, DeriveEraValPrefs } from '../types';
 
-import { Observable, combineLatest, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { StorageKey } from '@polkadot/types';
+import { combineLatest, of } from '@polkadot/x-rxjs';
+import { map, switchMap } from '@polkadot/x-rxjs/operators';
 
 import { deriveCache, memo } from '../util';
 
@@ -24,8 +24,8 @@ function mapPrefs (era: EraIndex, all: [StorageKey, ValidatorPrefs][]): DeriveEr
   return { era, validators };
 }
 
-export function _eraPrefs (api: ApiInterfaceRx): (era: EraIndex, withActive: boolean) => Observable<DeriveEraPrefs> {
-  return memo((era: EraIndex, withActive: boolean): Observable<DeriveEraPrefs> => {
+export function _eraPrefs (instanceId: string, api: ApiInterfaceRx): (era: EraIndex, withActive: boolean) => Observable<DeriveEraPrefs> {
+  return memo(instanceId, (era: EraIndex, withActive: boolean): Observable<DeriveEraPrefs> => {
     const cacheKey = `${CACHE_KEY}-${era.toString()}`;
     const cached = withActive
       ? undefined
@@ -45,22 +45,22 @@ export function _eraPrefs (api: ApiInterfaceRx): (era: EraIndex, withActive: boo
   });
 }
 
-export function eraPrefs (api: ApiInterfaceRx): (era: EraIndex) => Observable<DeriveEraPrefs> {
-  return memo((era: EraIndex): Observable<DeriveEraPrefs> =>
+export function eraPrefs (instanceId: string, api: ApiInterfaceRx): (era: EraIndex) => Observable<DeriveEraPrefs> {
+  return memo(instanceId, (era: EraIndex): Observable<DeriveEraPrefs> =>
     api.derive.staking._eraPrefs(era, true)
   );
 }
 
-export function _erasPrefs (api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraPrefs[]> {
-  return memo((eras: EraIndex[], withActive: boolean): Observable<DeriveEraPrefs[]> =>
+export function _erasPrefs (instanceId: string, api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraPrefs[]> {
+  return memo(instanceId, (eras: EraIndex[], withActive: boolean): Observable<DeriveEraPrefs[]> =>
     eras.length
       ? combineLatest(eras.map((era) => api.derive.staking._eraPrefs(era, withActive)))
       : of([])
   );
 }
 
-export function erasPrefs (api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraPrefs[]> {
-  return memo((withActive = false): Observable<DeriveEraPrefs[]> =>
+export function erasPrefs (instanceId: string, api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraPrefs[]> {
+  return memo(instanceId, (withActive = false): Observable<DeriveEraPrefs[]> =>
     api.derive.staking.erasHistoric(withActive).pipe(
       switchMap((eras) => api.derive.staking._erasPrefs(eras, withActive))
     )

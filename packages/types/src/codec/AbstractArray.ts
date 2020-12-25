@@ -1,15 +1,11 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { H256 } from '../interfaces/runtime';
-import { AnyJson, Codec, Registry } from '../types';
+import type { H256 } from '../interfaces/runtime';
+import type { AnyJson, Codec, Registry } from '../types';
 
-import { u8aConcat, u8aToHex } from '@polkadot/util';
-import { blake2AsU8a } from '@polkadot/util-crypto';
+import { compactToU8a, u8aConcat, u8aToHex } from '@polkadot/util';
 
-import Compact from './Compact';
-import Raw from './Raw';
 import { compareArray } from './utils';
 
 /**
@@ -19,7 +15,7 @@ import { compareArray } from './utils';
  * specific encoding/decoding on top of the base type.
  * @noInheritDoc
  */
-export default abstract class AbstractArray<T extends Codec> extends Array<T> implements Codec {
+export abstract class AbstractArray<T extends Codec> extends Array<T> implements Codec {
   public readonly registry: Registry;
 
   protected constructor (registry: Registry, ...values: T[]) {
@@ -34,14 +30,14 @@ export default abstract class AbstractArray<T extends Codec> extends Array<T> im
   public get encodedLength (): number {
     return this.reduce((total, raw): number => {
       return total + raw.encodedLength;
-    }, Compact.encodeU8a(this.length).length);
+    }, compactToU8a(this.length).length);
   }
 
   /**
    * @description returns a hash of the contents
    */
   public get hash (): H256 {
-    return new Raw(this.registry, blake2AsU8a(this.toU8a(), 256));
+    return this.registry.hash(this.toU8a());
   }
 
   /**
@@ -127,7 +123,7 @@ export default abstract class AbstractArray<T extends Codec> extends Array<T> im
     return isBare
       ? u8aConcat(...encoded)
       : u8aConcat(
-        Compact.encodeU8a(this.length),
+        compactToU8a(this.length),
         ...encoded
       );
   }
@@ -137,9 +133,14 @@ export default abstract class AbstractArray<T extends Codec> extends Array<T> im
   // new instance.
 
   /**
+   * @description Concatenates two arrays
+   */
+  public concat (other: T[]): T[] {
+    return this.toArray().concat(other instanceof AbstractArray ? other.toArray() : other);
+  }
+
+  /**
    * @description Filters the array with the callback
-   * @param callbackfn The filter function
-   * @param thisArg The `this` object to apply the result to
    */
   public filter (callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: unknown): T[] {
     return this.toArray().filter(callbackfn, thisArg);
@@ -147,8 +148,6 @@ export default abstract class AbstractArray<T extends Codec> extends Array<T> im
 
   /**
    * @description Maps the array with the callback
-   * @param callbackfn The mapping function
-   * @param thisArg The `this` onject to apply the result to
    */
   public map<U> (callbackfn: (value: T, index: number, array: T[]) => U, thisArg?: unknown): U[] {
     return this.toArray().map(callbackfn, thisArg);

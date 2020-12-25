@@ -1,6 +1,5 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { typeSplit } from '.';
 
@@ -38,12 +37,12 @@ describe('typeSplit', (): void => {
   it('checks for unclosed vec', (): void => {
     expect(
       (): string[] => typeSplit('Text, Vec<u64')
-    ).toThrow(/Invalid defintion/);
+    ).toThrow(/Invalid definition/);
   });
 
   it('checks for unclosed tuple', (): void => {
     expect(
       (): string[] => typeSplit('Text, (u64, u32')
-    ).toThrow(/Invalid defintion/);
+    ).toThrow(/Invalid definition/);
   });
 });

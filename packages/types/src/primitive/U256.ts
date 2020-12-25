@@ -1,12 +1,11 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import UInt from '../codec/UInt';
+import { UInt } from '../codec/UInt';
 
 /**
- * @name U256
+ * @name u256
  * @description
  * A 256-bit unsigned integer
  */
-export default class U256 extends UInt.with(256) {}
+export class u256 extends UInt.with(256) {}

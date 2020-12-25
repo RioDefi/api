@@ -1,16 +1,14 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { AnyNumber, Registry } from '../types';
+import type { AnyNumber, Registry } from '../types';
 
 import BN from 'bn.js';
-import { bnToBn, isBn, isBigInt, isNumber, isU8a, isHex } from '@polkadot/util';
+
+import { bnToBn, isBigInt, isBn, isHex, isNumber, isU8a } from '@polkadot/util';
 import { decodeAddress, encodeAddress } from '@polkadot/util-crypto';
 
-import U32 from '../primitive/U32';
-
-export const ENUMSET_SIZE = new BN(64);
+import { u32 } from '../primitive/U32';
 
 const PREFIX_1BYTE = 0xef;
 const PREFIX_2BYTE = 0xfc;
@@ -23,7 +21,7 @@ const MAX_4BYTE = new BN(1).shln(32);
 /** @internal */
 function decodeAccountIndex (value: AnyNumber): BN | BigInt | Uint8Array | number | string {
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  if (value instanceof AccountIndex) {
+  if (value instanceof GenericAccountIndex) {
     // `value.toBn()` on AccountIndex returns a pure BN (i.e. not an
     // AccountIndex), which has the initial `toString()` implementation.
     return value.toBn();
@@ -35,12 +33,12 @@ function decodeAccountIndex (value: AnyNumber): BN | BigInt | Uint8Array | numbe
 }
 
 /**
- * @name AccountIndex
+ * @name GenericAccountIndex
  * @description
  * A wrapper around an AccountIndex, which is a shortened, variable-length encoding
  * for an Account. We extends from [[U32]] to provide the number-like properties.
  */
-export default class AccountIndex extends U32 {
+export class GenericAccountIndex extends u32 {
   constructor (registry: Registry, value: AnyNumber = new BN(0)) {
     super(registry, decodeAccountIndex(value));
   }
@@ -113,7 +111,7 @@ export default class AccountIndex extends U32 {
    * @description Returns the string representation of the value
    */
   public toString (): string {
-    const length = AccountIndex.calcLength(this);
+    const length = GenericAccountIndex.calcLength(this);
 
     return encodeAddress(this.toU8a().subarray(0, length), this.registry.chainSS58);
   }

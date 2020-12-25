@@ -1,24 +1,53 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 // order important in structs... :)
 /* eslint-disable sort-keys */
 
-import { Definitions } from '../../types';
+import type { Definitions } from '../../types';
 
 export default {
   rpc: {
+    proveFinality: {
+      description: 'Prove finality for the range (begin; end] hash.',
+      params: [
+        {
+          name: 'begin',
+          type: 'BlockHash'
+        },
+        {
+          name: 'end',
+          type: 'BlockHash'
+        },
+        {
+          name: 'authoritiesSetId',
+          type: 'u64',
+          isOptional: true
+        }
+      ],
+      type: 'Option<EncodedFinalityProofs>'
+    },
     roundState: {
       description: 'Returns the state of the current best round state as well as the ongoing background rounds',
       params: [],
       type: 'ReportedRoundStates'
+    },
+    subscribeJustifications: {
+      description: 'Subscribes to grandpa justifications',
+      params: [],
+      pubsub: [
+        'justifications',
+        'subscribeJustifications',
+        'unsubscribeJustifications'
+      ],
+      type: 'JustificationNotification'
     }
   },
   types: {
     AuthorityIndex: 'u64',
     AuthorityList: 'Vec<NextAuthority>',
     AuthorityWeight: 'u64',
+    EncodedFinalityProofs: 'Bytes',
     GrandpaEquivocation: {
       _enum: {
         Prevote: 'GrandpaEquivocationValue',
@@ -39,6 +68,7 @@ export default {
       targetHash: 'Hash',
       targetNumber: 'BlockNumber'
     },
+    JustificationNotification: 'Bytes',
     KeyOwnerProof: 'MembershipProof',
     NextAuthority: '(AuthorityId, AuthorityWeight)',
     PendingPause: {

@@ -1,14 +1,14 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import type BN from 'bn.js';
-import { SignOptions } from '@polkadot/keyring/types';
-import { Hash } from '../interfaces/runtime';
-import { FunctionMetadataLatest } from '../interfaces/metadata';
-import { ArgsDef, Codec } from './codec';
+import type { SignOptions } from '@polkadot/keyring/types';
+import type { FunctionMetadataLatest } from '../interfaces/metadata';
+import type { Hash } from '../interfaces/runtime';
+import type { ArgsDef, Codec } from './codec';
 
 export interface ICompact<T> extends Codec {
+  toBigInt (): BigInt;
   toBn (): BN;
   toNumber (): number;
   unwrap (): T;
@@ -16,6 +16,7 @@ export interface ICompact<T> extends Codec {
 
 export interface IKeyringPair {
   address: string;
+  addressRaw: Uint8Array;
   publicKey: Uint8Array;
   sign: (data: Uint8Array, options?: SignOptions) => Uint8Array;
 }

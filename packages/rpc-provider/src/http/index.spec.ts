@@ -1,31 +1,36 @@
 // Copyright 2017-2020 @polkadot/rpc-provider authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { TEST_HTTP_URL } from '../../test/mockHttp';
-import Http from './';
+import { HttpProvider } from './';
 
 describe('Http', (): void => {
-  let http: Http;
+  let http: HttpProvider;
 
   beforeEach((): void => {
-    http = new Http(TEST_HTTP_URL);
+    http = new HttpProvider(TEST_HTTP_URL);
   });
 
   it('requires an http:// prefixed endpoint', (): void => {
     expect(
-      (): Http => new Http('ws://')
+      () => new HttpProvider('ws://')
     ).toThrow(/with 'http/);
   });
 
   it('allows https:// endpoints', (): void => {
     expect(
-      (): Http => new Http('https://')
+      () => new HttpProvider('https://')
+    ).not.toThrow();
+  });
+
+  it('allows custom headers', (): void => {
+    expect(
+      () => new HttpProvider('https://', { foo: 'bar' })
     ).not.toThrow();
   });
 
   it('always returns isConnected true', (): void => {
-    expect(http.isConnected()).toEqual(true);
+    expect(http.isConnected).toEqual(true);
   });
 
   it('does not (yet) support subscribe', (): Promise<number | void> => {

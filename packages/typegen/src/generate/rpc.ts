@@ -1,13 +1,14 @@
 // Copyright 2017-2020 @polkadot/typegen authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
+
+import type { Definitions } from '@polkadot/types/types';
 
 import Handlebars from 'handlebars';
 
 import { TypeRegistry } from '@polkadot/types/create';
-import * as definitions from '@polkadot/types/interfaces/definitions';
+import * as defaultDefinitions from '@polkadot/types/interfaces/definitions';
 
-import { createImports, getSimilarTypes, readTemplate, setImports, writeFile } from '../util';
+import { createImports, formatType, getSimilarTypes, readTemplate, registerDefinitions, setImports, writeFile } from '../util';
 
 const StorageKeyTye = 'StorageKey | string | Uint8Array | any';
 
@@ -15,21 +16,26 @@ const template = readTemplate('rpc');
 const generateRpcTypesTemplate = Handlebars.compile(template);
 
 /** @internal */
-export default function generateRpcTypes (dest = 'packages/api/src/augment/rpc.ts'): void {
+export function generateRpcTypes (registry: TypeRegistry, importDefinitions: Record<string, Definitions>, dest: string, extraTypes: Record<string, Record<string, { types: Record<string, any> }>> = {}): void {
   writeFile(dest, (): string => {
-    const registry = new TypeRegistry();
-    const allTypes = { '@polkadot/types/interfaces': definitions };
+    const allTypes: Record<string, Record<string, { types: Record<string, any> }>> = { '@polkadot/types/interfaces': importDefinitions, ...extraTypes };
     const imports = createImports(allTypes);
+    const definitions = imports.definitions as Record<string, Definitions>;
     const allDefs = Object.entries(allTypes).reduce((defs, [path, obj]) => {
       return Object.entries(obj).reduce((defs, [key, value]) => ({ ...defs, [`${path}/${key}`]: value }), defs);
     }, {});
+
     const rpcKeys = Object
       .keys(definitions)
-      .filter((key) => Object.keys(definitions[key as 'babe'].rpc || {}).length !== 0)
+      .filter((key) => Object.keys(definitions[key].rpc || {}).length !== 0)
       .sort();
-    const modules = rpcKeys.map((section) => {
-      const allMethods = Object.keys(definitions[section as 'babe'].rpc).sort().map((methodName) => {
-        const def = definitions[section as 'babe'].rpc[methodName];
+
+    const modules = rpcKeys.map((sectionFullName) => {
+      const rpc = definitions[sectionFullName].rpc;
+      const section = sectionFullName.split('/').pop();
+
+      const allMethods = Object.keys(rpc).sort().map((methodName) => {
+        const def = rpc[methodName];
 
         let args;
         let type;
@@ -62,14 +68,14 @@ export default function generateRpcTypes (dest = 'packages/api/src/augment/rpc.t
           setImports(allDefs, imports, [def.type]);
 
           args = def.params.map((param) => {
-            const similarTypes = getSimilarTypes(definitions, registry, param.type, imports);
+            const similarTypes = getSimilarTypes(registry, definitions, param.type, imports);
 
             setImports(allDefs, imports, [param.type, ...similarTypes]);
 
             return `${param.name}${param.isOptional ? '?' : ''}: ${similarTypes.join(' | ')}`;
           });
 
-          type = def.type;
+          type = formatType(allDefs, def.type, imports);
           generic = '';
         }
 
@@ -104,4 +110,17 @@ export default function generateRpcTypes (dest = 'packages/api/src/augment/rpc.t
       types
     });
   });
+}
+
+export function generateDefaultRpc (dest = 'packages/api/src/augment/rpc.ts', extraTypes: Record<string, Record<string, { types: Record<string, any> }>> = {}): void {
+  const registry = new TypeRegistry();
+
+  registerDefinitions(registry, extraTypes);
+
+  generateRpcTypes(
+    registry,
+    defaultDefinitions,
+    dest,
+    extraTypes
+  );
 }

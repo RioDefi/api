@@ -1,9 +1,8 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { FunctionMetadataLatest } from '../interfaces/metadata';
-import { Call } from '../interfaces/runtime';
+import type { FunctionMetadataLatest } from '../interfaces/metadata';
+import type { Call } from '../interfaces/runtime';
 
 export interface CallBase {
   callIndex: Uint8Array;
@@ -16,7 +15,3 @@ export interface CallBase {
 export interface CallFunction extends CallBase {
   (...args: any[]): Call;
 }
-
-export type Calls = Record<string, CallFunction>;
-
-export type ModulesWithCalls = Record<string, Calls>;

@@ -1,18 +1,19 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { ReferendumIndex } from '@polkadot/types/interfaces';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { ReferendumIndex } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
 
 import BN from 'bn.js';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+
+import { of } from '@polkadot/x-rxjs';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
-export function referendumIds (api: ApiInterfaceRx): () => Observable<BN[]> {
-  return memo((): Observable<BN[]> =>
+export function referendumIds (instanceId: string, api: ApiInterfaceRx): () => Observable<BN[]> {
+  return memo(instanceId, (): Observable<BN[]> =>
     api.query.democracy?.lowestUnbaked
       ? api.queryMulti<[ReferendumIndex, ReferendumIndex]>([
         api.query.democracy.lowestUnbaked,

@@ -1,29 +1,28 @@
 // Copyright 2017-2020 @polkadot/api authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 // Augment the modules
 import '@polkadot/api/augment';
 
 import type BN from 'bn.js';
-import { DeriveCustom, ExactDerive } from '@polkadot/api-derive';
-import { Constants } from '@polkadot/metadata/Decorated/types';
-import { RpcInterface } from '@polkadot/rpc-core/types';
-import { ProviderInterface, ProviderInterfaceEmitted } from '@polkadot/rpc-provider/types';
-import { Metadata } from '@polkadot/types';
-import { Hash, RuntimeVersion } from '@polkadot/types/interfaces';
-import { DefinitionRpc, DefinitionRpcSub, Signer, SignatureOptions, Registry, RegisteredTypes } from '@polkadot/types/types';
-
-import { DeriveAllSections } from '../util/decorate';
-import ApiBase from '../base';
-import { DecoratedRpc } from './rpc';
-import { QueryableStorage, QueryableStorageMulti } from './storage';
-import { SubmittableExtrinsics } from './submittable';
+import type { DeriveCustom, ExactDerive } from '@polkadot/api-derive';
+import type { Metadata } from '@polkadot/metadata';
+import type { RpcInterface } from '@polkadot/rpc-core/types';
+import type { ProviderInterface, ProviderInterfaceEmitted } from '@polkadot/rpc-provider/types';
+import type { Hash, RuntimeVersion } from '@polkadot/types/interfaces';
+import type { DefinitionRpc, DefinitionRpcSub, RegisteredTypes, Registry, SignatureOptions, Signer } from '@polkadot/types/types';
+import type { ApiBase } from '../base';
+import type { DeriveAllSections } from '../util/decorate';
+import type { QueryableConsts } from './consts';
+import type { DecoratedRpc } from './rpc';
+import type { QueryableStorage, QueryableStorageMulti } from './storage';
+import type { SubmittableExtrinsics } from './submittable';
 
 export { Signer, SignerResult } from '@polkadot/types/types';
-export { default as ApiBase } from '../base';
+export { ApiBase } from '../base';
 export * from '../submittable/types';
 export * from './base';
+export * from './consts';
 export * from './rpc';
 export * from './storage';
 export * from './submittable';
@@ -67,7 +66,7 @@ export interface ApiOptions extends RegisteredTypes {
 
 // A smaller interface of ApiRx, used in derive and in SubmittableExtrinsic
 export interface ApiInterfaceRx {
-  consts: Constants;
+  consts: QueryableConsts<'rxjs'>;
   // TODO This needs to be typed correctly
   derive: DeriveAllSections<'rxjs', ExactDerive>;
   extrinsicType: number;

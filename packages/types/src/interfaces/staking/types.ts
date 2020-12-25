@@ -1,10 +1,9 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import { ITuple } from '@polkadot/types/types';
-import { BTreeMap, Compact, Enum, Option, Struct, Vec } from '@polkadot/types/codec';
-import { bool, u128, u16, u32 } from '@polkadot/types/primitive';
-import { AccountId, Balance, BlockNumber, Moment, Perbill } from '@polkadot/types/interfaces/runtime';
+import type { BTreeMap, Compact, Enum, Option, Struct, Vec, bool, u128, u16, u32 } from '@polkadot/types';
+import type { ITuple } from '@polkadot/types/types';
+import type { AccountId, Balance, BlockNumber, Moment, PerU16, Perbill } from '@polkadot/types/interfaces/runtime';
 
 /** @name ActiveEraInfo */
 export interface ActiveEraInfo extends Struct {
@@ -14,6 +13,26 @@ export interface ActiveEraInfo extends Struct {
 
 /** @name CompactAssignments */
 export interface CompactAssignments extends Struct {
+  readonly votes1: Vec<ITuple<[NominatorIndexCompact, ValidatorIndexCompact]>>;
+  readonly votes2: Vec<ITuple<[NominatorIndexCompact, CompactScoreCompact, ValidatorIndexCompact]>>;
+  readonly votes3: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes4: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes5: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes6: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes7: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes8: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes9: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes10: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes11: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes12: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes13: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes14: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes15: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+  readonly votes16: Vec<ITuple<[NominatorIndexCompact, Vec<CompactScoreCompact>, ValidatorIndexCompact]>>;
+}
+
+/** @name CompactAssignmentsTo257 */
+export interface CompactAssignmentsTo257 extends Struct {
   readonly votes1: Vec<ITuple<[NominatorIndex, Vec<CompactScore>, ValidatorIndex]>>;
   readonly votes2: Vec<ITuple<[NominatorIndex, Vec<CompactScore>, ValidatorIndex]>>;
   readonly votes3: Vec<ITuple<[NominatorIndex, Vec<CompactScore>, ValidatorIndex]>>;
@@ -34,6 +53,9 @@ export interface CompactAssignments extends Struct {
 
 /** @name CompactScore */
 export interface CompactScore extends ITuple<[ValidatorIndex, OffchainAccuracy]> {}
+
+/** @name CompactScoreCompact */
+export interface CompactScoreCompact extends ITuple<[ValidatorIndexCompact, OffchainAccuracyCompact]> {}
 
 /** @name ElectionCompute */
 export interface ElectionCompute extends Enum {
@@ -124,11 +146,14 @@ export interface Nominations extends Struct {
 /** @name NominatorIndex */
 export interface NominatorIndex extends u32 {}
 
+/** @name NominatorIndexCompact */
+export interface NominatorIndexCompact extends Compact<NominatorIndex> {}
+
 /** @name OffchainAccuracy */
 export interface OffchainAccuracy extends PerU16 {}
 
-/** @name PerU16 */
-export interface PerU16 extends u16 {}
+/** @name OffchainAccuracyCompact */
+export interface OffchainAccuracyCompact extends Compact<OffchainAccuracy> {}
 
 /** @name PhragmenScore */
 export interface PhragmenScore extends Vec<u128> {}
@@ -138,6 +163,15 @@ export interface Points extends u32 {}
 
 /** @name RewardDestination */
 export interface RewardDestination extends Enum {
+  readonly isStaked: boolean;
+  readonly isStash: boolean;
+  readonly isController: boolean;
+  readonly isAccount: boolean;
+  readonly asAccount: AccountId;
+}
+
+/** @name RewardDestinationTo257 */
+export interface RewardDestinationTo257 extends Enum {
   readonly isStaked: boolean;
   readonly isStash: boolean;
   readonly isController: boolean;
@@ -223,6 +257,9 @@ export interface UnlockChunk extends Struct {
 
 /** @name ValidatorIndex */
 export interface ValidatorIndex extends u16 {}
+
+/** @name ValidatorIndexCompact */
+export interface ValidatorIndexCompact extends Compact<ValidatorIndex> {}
 
 /** @name ValidatorPrefs */
 export interface ValidatorPrefs extends Struct {

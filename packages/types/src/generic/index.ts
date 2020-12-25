@@ -1,12 +1,14 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-export { default as GenericAccountId } from './AccountId';
-export { default as GenericAccountIndex } from './AccountIndex';
-export { default as GenericAddress } from './Address';
-export { default as GenericBlock } from './Block';
-export { default as GenericCall } from './Call';
-export { default as GenericConsensusEngineId } from './ConsensusEngineId';
-export { default as GenericEvent } from './Event';
-export { default as GenericVote } from './Vote';
+export * from '../ethereum';
+
+export { GenericAccountId } from './AccountId';
+export { GenericAccountIndex } from './AccountIndex';
+export { GenericBlock } from './Block';
+export { GenericCall } from './Call';
+export { GenericConsensusEngineId } from './ConsensusEngineId';
+export { GenericEvent, GenericEventData } from './Event';
+export { GenericLookupSource } from './LookupSource';
+export { GenericMultiAddress } from './MultiAddress';
+export { GenericVote } from './Vote';

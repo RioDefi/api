@@ -1,15 +1,15 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { AccountId, AccountData, AccountIndex, AccountInfo, Address, Balance, Index } from '@polkadot/types/interfaces';
-import { ITuple } from '@polkadot/types/types';
-import { DeriveBalancesAccount } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { AccountData, AccountId, AccountIndex, AccountInfo, Address, Balance, Index } from '@polkadot/types/interfaces';
+import type { ITuple } from '@polkadot/types/types';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveBalancesAccount } from '../types';
 
-import { Observable, combineLatest, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { ApiInterfaceRx } from '@polkadot/api/types';
 import { isFunction } from '@polkadot/util';
+import { combineLatest, of } from '@polkadot/x-rxjs';
+import { map, switchMap } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
@@ -23,7 +23,7 @@ function calcBalances (api: ApiInterfaceRx, [accountId, [freeBalance, reservedBa
     frozenFee,
     frozenMisc,
     reservedBalance,
-    votingBalance: api.registry.createType('Balance', freeBalance.add(reservedBalance))
+    votingBalance: api.registry.createType('Balance', freeBalance.toBn())
   };
 }
 
@@ -80,10 +80,10 @@ function queryCurrent (api: ApiInterfaceRx, accountId: AccountId): Observable<Re
  * });
  * ```
  */
-export function account (api: ApiInterfaceRx): (address: AccountIndex | AccountId | Address | string) => Observable<DeriveBalancesAccount> {
-  return memo((address: AccountIndex | AccountId | Address | string): Observable<DeriveBalancesAccount> =>
-    api.derive.accounts.info(address).pipe(
-      switchMap(({ accountId }): Observable<[AccountId, Result]> =>
+export function account (instanceId: string, api: ApiInterfaceRx): (address: AccountIndex | AccountId | Address | string) => Observable<DeriveBalancesAccount> {
+  return memo(instanceId, (address: AccountIndex | AccountId | Address | string): Observable<DeriveBalancesAccount> =>
+    api.derive.accounts.accountId(address).pipe(
+      switchMap((accountId): Observable<[AccountId, Result]> =>
         (accountId
           ? combineLatest([
             of(accountId),

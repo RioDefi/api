@@ -1,13 +1,10 @@
 // Copyright 2017-2019 @polkadot/api authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Storage } from '@polkadot/metadata/Decorated/types';
-
-import storageFromMeta from '@polkadot/metadata/Decorated/storage/fromMetadata';
-import Metadata from '@polkadot/metadata/Metadata';
-import metaStatic from '@polkadot/metadata/Metadata/static';
-import { TypeRegistry } from '@polkadot/types';
+import { decorateStorage, Metadata } from '@polkadot/metadata';
+import { Storage } from '@polkadot/metadata/decorate/types';
+import metaStatic from '@polkadot/metadata/static';
+import { TypeRegistry } from '@polkadot/types/create';
 
 import { extractStorageArgs } from './validate';
 
@@ -18,7 +15,7 @@ describe('extractStorageArgs', (): void => {
   beforeEach((): void => {
     const metadata = new Metadata(registry, metaStatic);
 
-    storage = storageFromMeta(registry, metadata);
+    storage = decorateStorage(registry, metadata.asLatest, metadata.version);
   });
 
   it('validates no-arg plain', (): void => {

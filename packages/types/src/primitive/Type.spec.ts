@@ -1,12 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { stringToU8a, u8aConcat } from '@polkadot/util';
 
 import { TypeRegistry } from '../create';
-import Text from './Text';
-import Type from './Type';
+import { Text, Type } from '.';
 
 describe('Type', (): void => {
   const registry = new TypeRegistry();
@@ -111,5 +109,9 @@ describe('Type', (): void => {
 
     expect(decoded.encodedLength).toEqual(original.length + 1); // extra byte for length
     expect(decoded.toString()).toEqual(expected);
+  });
+
+  it('has the correct raw', (): void => {
+    expect(new Type(registry).toRawType()).toEqual('Type');
   });
 });

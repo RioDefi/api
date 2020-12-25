@@ -1,23 +1,21 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { PropIndex } from '../interfaces/democracy';
-import { Codec, CodecTo } from '../types';
+import type { PropIndex } from '../interfaces/democracy';
+import type { Codec, CodecTo } from '../types';
 
-import Metadata from '@polkadot/metadata/Metadata';
-import rpcMetadata from '@polkadot/metadata/Metadata/static';
+import { Metadata } from '@polkadot/metadata';
+import rpcMetadata from '@polkadot/metadata/static';
 
 import { createTypeUnsafe, TypeRegistry } from '../create';
-import AccountId from '../generic/AccountId';
-import Text from '../primitive/Text';
-import Vec from './Vec';
-import Tuple from './Tuple';
+import { GenericAccountId as AccountId } from '../generic';
+import { Text } from '../primitive';
+import { Tuple, Vec } from '.';
 
 const registry = new TypeRegistry();
+const metadata = new Metadata(registry, rpcMetadata);
 
-// eslint-disable-next-line no-new
-new Metadata(registry, rpcMetadata);
+registry.setMetadata(metadata);
 
 describe('Vec', (): void => {
   let vector: Vec<Codec>;
@@ -108,6 +106,12 @@ describe('Vec', (): void => {
         3: '4567',
         4: '56789'
       });
+    });
+
+    it('exposes a working concat', (): void => {
+      expect(
+        vector.concat(new Vec(registry, Text, ['987', '654'])).toString()
+      ).toEqual('1,23,345,4567,56789,987,654');
     });
 
     it('exposes a working filter', (): void => {

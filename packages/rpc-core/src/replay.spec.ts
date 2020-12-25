@@ -1,19 +1,20 @@
 // Copyright 2017-2020 @polkadot/rpc-core authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Observable, of } from 'rxjs';
-import MockProvider from '@polkadot/rpc-provider/mock';
-import { TypeRegistry } from '@polkadot/types';
+import type { Observable } from '@polkadot/x-rxjs';
 
-import Rpc from '.';
+import { MockProvider } from '@polkadot/rpc-provider/mock';
+import { TypeRegistry } from '@polkadot/types/create';
+import { of } from '@polkadot/x-rxjs';
+
+import { RpcCore } from '.';
 
 describe('replay', (): void => {
   const registry = new TypeRegistry();
-  let rpc: Rpc;
+  let rpc: RpcCore;
 
   beforeEach((): void => {
-    rpc = new Rpc(registry, new MockProvider(registry));
+    rpc = new RpcCore('653', registry, new MockProvider(registry));
   });
 
   it('subscribes via the rpc section', (done): void => {

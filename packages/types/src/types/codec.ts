@@ -1,29 +1,32 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { H256 } from '../interfaces/runtime';
-import { AnyJson, BareOpts } from './helpers';
-import { Registry } from './registry';
+import type BN from 'bn.js';
+import type { H256 } from '../interfaces/runtime';
+import type { Registry } from './registry';
 
-import BN from 'bn.js';
+export type AnyJson = string | number | boolean | null | undefined | AnyJson[] | { [index: string]: AnyJson };
 
-export type ArgsDef = Record<string, Constructor>;
+export type AnyFunction = (...args: any[]) => any;
 
-// We cannot inline this into CodecArg, TS thrws up when building docs
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface CodecArgArray extends Array<CodecArg> {}
+export type AnyNumber = BN | BigInt | Uint8Array | number | string;
 
-export type CodecArg = Codec | BN | boolean | string | Uint8Array | boolean | number | string | undefined | CodecArgArray | { [index: string]: CodecArg };
+export type AnyString = string | string;
+
+export type AnyU8a = Uint8Array | number[] | string;
+
+// helper to extract keys from an array
+export type ArrayElementType<T extends ReadonlyArray<unknown>> = T extends ReadonlyArray<infer ElementType>
+  ? ElementType
+  : never;
+
+export type BareOpts = boolean | Record<string, boolean>;
+
+export type Callback<T, E = undefined> = E extends Codec
+  ? (result: T, extra: E) => void | Promise<void>
+  : (result: T) => void | Promise<void>;
 
 export type CodecTo = 'toHex' | 'toJSON' | 'toString' | 'toU8a';
-
-export interface Constructor<T = Codec> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  new(registry: Registry, ...value: any[]): T;
-}
-
-export type ConstructorDef<T = Codec> = Record<string, Constructor<T>>;
 
 /**
  * @name Codec
@@ -89,3 +92,19 @@ export interface Codec {
    */
   toU8a (isBare?: BareOpts): Uint8Array;
 }
+
+// eslint-disable-next-line no-use-before-define
+export type CodecArg = Codec | BigInt | BN | boolean | string | Uint8Array | boolean | number | string | undefined | CodecArgArray | { [index: string]: CodecArg };
+
+// We cannot inline this into CodecArg, TS throws up when building docs
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface CodecArgArray extends Array<CodecArg> {}
+
+export interface Constructor<T = Codec> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  new(registry: Registry, ...value: any[]): T;
+}
+
+export type ConstructorDef<T = Codec> = Record<string, Constructor<T>>;
+
+export type ArgsDef = Record<string, Constructor>;

@@ -1,12 +1,11 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { hexToString } from '@polkadot/util';
 
-import { u32, Text } from '../primitive';
 import { TypeRegistry } from '../create';
-import Result from './Result';
+import { Text, u32 } from '../primitive';
+import { Result } from '.';
 
 describe('Result', (): void => {
   const registry = new TypeRegistry();

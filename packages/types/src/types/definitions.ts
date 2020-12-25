@@ -1,6 +1,5 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 export type DefinitionTypeType = string;
 
@@ -13,6 +12,8 @@ export type DefinitionTypeStruct = Record<string, DefinitionTypeType> | { _alias
 export type DefinitionType = string | DefinitionTypeEnum | DefinitionTypeSet | DefinitionTypeStruct;
 
 export interface DefinitionRpcParam {
+  isCached?: boolean;
+  isHistoric?: boolean;
   isOptional?: boolean;
   name: string;
   type: DefinitionTypeType;
@@ -20,7 +21,10 @@ export interface DefinitionRpcParam {
 
 export interface DefinitionRpc {
   alias?: string[];
+  aliasSection?: string;
   description: string;
+  endpoint?: string;
+  isSigned?: boolean;
   params: DefinitionRpcParam[];
   type: DefinitionTypeType;
 }
@@ -37,7 +41,11 @@ export interface DefinitionRpcSub extends DefinitionRpc {
   pubsub: [string, string, string];
 }
 
+export type DefinitionsRpc = Record<string, DefinitionRpc | DefinitionRpcSub>;
+
+export type DefinitionsTypes = Record<string, DefinitionType>;
+
 export interface Definitions {
-  rpc: Record<string, DefinitionRpc | DefinitionRpcSub>;
-  types: Record<string, DefinitionType>;
+  rpc: DefinitionsRpc;
+  types: DefinitionsTypes;
 }

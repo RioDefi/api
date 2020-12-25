@@ -1,13 +1,13 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { Balance } from '@polkadot/types/interfaces';
-import { DeriveFees } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Balance } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveFees } from '../types';
 
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { of } from '@polkadot/x-rxjs';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
@@ -24,8 +24,8 @@ import { memo } from '../util';
  * });
  * ```
  */
-export function fees (api: ApiInterfaceRx): () => Observable<DeriveFees> {
-  return memo((): Observable<DeriveFees> =>
+export function fees (instanceId: string, api: ApiInterfaceRx): () => Observable<DeriveFees> {
+  return memo(instanceId, (): Observable<DeriveFees> =>
     of([
       // deprecated - remove
       (api.consts.balances?.creationFee as unknown as Balance) || api.registry.createType('Balance'),

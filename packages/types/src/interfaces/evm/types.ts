@@ -1,14 +1,13 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import { Struct, Vec } from '@polkadot/types/codec';
-import { Bytes, U256 } from '@polkadot/types/primitive';
-import { H160, H256 } from '@polkadot/types/interfaces/runtime';
+import type { Bytes, Struct, Vec, u256 } from '@polkadot/types';
+import type { H160, H256 } from '@polkadot/types/interfaces/runtime';
 
 /** @name Account */
 export interface Account extends Struct {
-  readonly nonce: U256;
-  readonly balance: U256;
+  readonly nonce: u256;
+  readonly balance: u256;
 }
 
 /** @name Log */
@@ -20,7 +19,7 @@ export interface Log extends Struct {
 
 /** @name Vicinity */
 export interface Vicinity extends Struct {
-  readonly gasPrice: U256;
+  readonly gasPrice: u256;
   readonly origin: H160;
 }
 

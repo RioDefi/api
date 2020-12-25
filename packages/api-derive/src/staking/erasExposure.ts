@@ -1,14 +1,14 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { EraIndex, Exposure } from '@polkadot/types/interfaces';
-import { DeriveEraExposure, DeriveEraNominatorExposure, DeriveEraValidatorExposure } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { StorageKey } from '@polkadot/types';
+import type { EraIndex, Exposure } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveEraExposure, DeriveEraNominatorExposure, DeriveEraValidatorExposure } from '../types';
 
-import { Observable, combineLatest, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { StorageKey } from '@polkadot/types';
+import { combineLatest, of } from '@polkadot/x-rxjs';
+import { map, switchMap } from '@polkadot/x-rxjs/operators';
 
 import { deriveCache, memo } from '../util';
 
@@ -36,8 +36,8 @@ function mapStakers (era: EraIndex, stakers: KeysAndExposures): DeriveEraExposur
   return { era, nominators, validators };
 }
 
-export function _eraExposure (api: ApiInterfaceRx): (era: EraIndex, withActive: boolean) => Observable<DeriveEraExposure> {
-  return memo((era: EraIndex, withActive: boolean): Observable<DeriveEraExposure> => {
+export function _eraExposure (instanceId: string, api: ApiInterfaceRx): (era: EraIndex, withActive: boolean) => Observable<DeriveEraExposure> {
+  return memo(instanceId, (era: EraIndex, withActive: boolean): Observable<DeriveEraExposure> => {
     const cacheKey = `${CACHE_KEY}-${era.toString()}`;
     const cached = withActive
       ? undefined
@@ -57,22 +57,22 @@ export function _eraExposure (api: ApiInterfaceRx): (era: EraIndex, withActive: 
   });
 }
 
-export function eraExposure (api: ApiInterfaceRx): (era: EraIndex) => Observable<DeriveEraExposure> {
-  return memo((era: EraIndex): Observable<DeriveEraExposure> =>
+export function eraExposure (instanceId: string, api: ApiInterfaceRx): (era: EraIndex) => Observable<DeriveEraExposure> {
+  return memo(instanceId, (era: EraIndex): Observable<DeriveEraExposure> =>
     api.derive.staking._eraExposure(era, true)
   );
 }
 
-export function _erasExposure (api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraExposure[]> {
-  return memo((eras: EraIndex[], withActive: boolean): Observable<DeriveEraExposure[]> =>
+export function _erasExposure (instanceId: string, api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraExposure[]> {
+  return memo(instanceId, (eras: EraIndex[], withActive: boolean): Observable<DeriveEraExposure[]> =>
     eras.length
       ? combineLatest(eras.map((era) => api.derive.staking._eraExposure(era, withActive)))
       : of([])
   );
 }
 
-export function erasExposure (api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraExposure[]> {
-  return memo((withActive = false): Observable<DeriveEraExposure[]> =>
+export function erasExposure (instanceId: string, api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraExposure[]> {
+  return memo(instanceId, (withActive = false): Observable<DeriveEraExposure[]> =>
     api.derive.staking.erasHistoric(withActive).pipe(
       switchMap((eras) => api.derive.staking._erasExposure(eras, withActive))
     )

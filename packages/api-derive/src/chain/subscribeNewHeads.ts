@@ -1,18 +1,18 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Observable } from '@polkadot/x-rxjs';
 
-import { Observable, combineLatest, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { combineLatest, of } from '@polkadot/x-rxjs';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { HeaderExtended } from '../type';
 import { memo } from '../util';
 
 /**
  * @name subscribeNewHeads
- * @returns An array containing the block header and the block author
+ * @returns A header with the current header (including extracted author)
  * @description An observable of the current block header and it's author
  * @example
  * <BR>
@@ -23,8 +23,8 @@ import { memo } from '../util';
  * });
  * ```
  */
-export function subscribeNewHeads (api: ApiInterfaceRx): () => Observable<HeaderExtended> {
-  return memo((): Observable<HeaderExtended> =>
+export function subscribeNewHeads (instanceId: string, api: ApiInterfaceRx): () => Observable<HeaderExtended> {
+  return memo(instanceId, (): Observable<HeaderExtended> =>
     combineLatest([
       api.rpc.chain.subscribeNewHeads(),
       api.query.session

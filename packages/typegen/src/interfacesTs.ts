@@ -1,21 +1,15 @@
 // Copyright 2017-2020 @polkadot/typegen authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import generateConstsTypes from './generate/consts';
-import generateInterfaceTypes from './generate/interfaceRegistry';
-import generateQueryTypes from './generate/query';
-import generateRpcTypes from './generate/rpc';
-import generateTsDef from './generate/tsDef';
-import generateTxTypes from './generate/tx';
+import { generateDefaultConsts, generateDefaultInterface, generateDefaultQuery, generateDefaultRpc, generateDefaultTsDef, generateDefaultTx } from './generate';
 
-export default function main (): void {
-  generateInterfaceTypes();
+export function main (): void {
+  generateDefaultInterface();
 
-  generateConstsTypes();
-  generateQueryTypes();
-  generateTxTypes();
-  generateRpcTypes();
+  generateDefaultConsts();
+  generateDefaultQuery();
+  generateDefaultTx();
+  generateDefaultRpc();
 
-  generateTsDef();
+  generateDefaultTsDef();
 }

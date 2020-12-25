@@ -1,6 +1,5 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { assert } from '@polkadot/util';
 
@@ -43,7 +42,7 @@ export function typeSplit (type: string): string[] {
     }
   }
 
-  assert(isNotNested(cDepth, fDepth, sDepth, tDepth), `Invalid defintion (missing terminators) found in ${type}`);
+  assert(isNotNested(cDepth, fDepth, sDepth, tDepth), `Invalid definition (missing terminators) found in ${type}`);
 
   // the final leg of the journey
   result.push(type.substr(start, type.length - start).trim());

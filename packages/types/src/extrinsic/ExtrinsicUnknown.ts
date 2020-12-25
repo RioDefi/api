@@ -1,11 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Registry } from '../types';
-import { ExtrinsicOptions } from './types';
+import type { Registry } from '../types';
+import type { ExtrinsicOptions } from './types';
 
-import Struct from '../codec/Struct';
+import { Struct } from '../codec/Struct';
 import { UNMASK_VERSION } from './constants';
 
 /**
@@ -13,7 +12,7 @@ import { UNMASK_VERSION } from './constants';
  * @description
  * A default handler for extrinsics where the version is not known (default throw)
  */
-export default class ExtrinsicUnknown extends Struct {
+export class GenericExtrinsicUnknown extends Struct {
   constructor (registry: Registry, value?: unknown, { isSigned = false, version = 0 }: Partial<ExtrinsicOptions> = {}) {
     super(registry, {});
 

@@ -1,21 +1,23 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { EraIndex, EraRewardPoints } from '@polkadot/types/interfaces';
-import { DeriveEraPoints, DeriveEraValPoints } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { EraIndex, EraRewardPoints } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveEraPoints, DeriveEraValPoints } from '../types';
 
-import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { BN_ZERO } from '@polkadot/util';
+import { of } from '@polkadot/x-rxjs';
+import { map, switchMap } from '@polkadot/x-rxjs/operators';
 
 import { deriveCache, memo } from '../util';
+import { filterEras } from './util';
 
 const CACHE_KEY = 'eraPoints';
 
 function mapValidators ({ individual }: EraRewardPoints): DeriveEraValPoints {
   return [...individual.entries()]
-    .filter(([, points]): boolean => points.gtn(0))
+    .filter(([, points]) => points.gt(BN_ZERO))
     .reduce((result: DeriveEraValPoints, [validatorId, points]): DeriveEraValPoints => {
       result[validatorId.toString()] = points;
 
@@ -31,8 +33,8 @@ function mapPoints (eras: EraIndex[], points: EraRewardPoints[]): DeriveEraPoint
   }));
 }
 
-export function _erasPoints (api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraPoints[]> {
-  return memo((eras: EraIndex[], withActive: boolean): Observable<DeriveEraPoints[]> => {
+export function _erasPoints (instanceId: string, api: ApiInterfaceRx): (eras: EraIndex[], withActive: boolean) => Observable<DeriveEraPoints[]> {
+  return memo(instanceId, (eras: EraIndex[], withActive: boolean): Observable<DeriveEraPoints[]> => {
     if (!eras.length) {
       return of([]);
     }
@@ -42,7 +44,7 @@ export function _erasPoints (api: ApiInterfaceRx): (eras: EraIndex[], withActive
       : eras
         .map((era) => deriveCache.get<DeriveEraPoints>(`${CACHE_KEY}-${era.toString()}`))
         .filter((value): value is DeriveEraPoints => !!value);
-    const remaining = eras.filter((era) => !cached.some((cached) => era.eq(cached.era)));
+    const remaining = filterEras(eras, cached);
 
     return !remaining.length
       ? of(cached)
@@ -61,8 +63,8 @@ export function _erasPoints (api: ApiInterfaceRx): (eras: EraIndex[], withActive
   });
 }
 
-export function erasPoints (api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraPoints[]> {
-  return memo((withActive = false): Observable<DeriveEraPoints[]> =>
+export function erasPoints (instanceId: string, api: ApiInterfaceRx): (withActive?: boolean) => Observable<DeriveEraPoints[]> {
+  return memo(instanceId, (withActive = false): Observable<DeriveEraPoints[]> =>
     api.derive.staking.erasHistoric(withActive).pipe(
       switchMap((eras) => api.derive.staking._erasPoints(eras, withActive))
     )

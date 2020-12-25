@@ -1,6 +1,5 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { isObject } from '@polkadot/util';
 
@@ -11,7 +10,7 @@ function compareSetArray (a: Set<unknown>, b: any[]): boolean {
 
 // NOTE These are used internally and when comparing objects, expects that
 // when the second is an Set<string, Codec> that the first has to be as well
-export default function compareSet (a: Set<unknown>, b?: unknown): boolean {
+export function compareSet (a: Set<unknown>, b?: unknown): boolean {
   if (Array.isArray(b)) {
     return compareSetArray(a, b);
   } else if (b instanceof Set) {

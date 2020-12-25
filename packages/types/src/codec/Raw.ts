@@ -1,12 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { H256 } from '../interfaces/runtime';
-import { AnyJson, AnyU8a, IU8a, Registry } from '../types';
+import type { H256 } from '../interfaces/runtime';
+import type { AnyJson, AnyU8a, IU8a, Registry } from '../types';
 
-import { isU8a, isUndefined, u8aToHex, u8aToU8a } from '@polkadot/util';
-import { blake2AsU8a } from '@polkadot/util-crypto';
+import { assert, isAscii, isU8a, isUndefined, isUtf8, u8aToHex, u8aToString, u8aToU8a } from '@polkadot/util';
 
 /** @internal */
 function decodeU8a (value?: any): Uint8Array {
@@ -26,7 +24,7 @@ function decodeU8a (value?: any): Uint8Array {
  * actual lengths instead of used directly.
  * @noInheritDoc
  */
-export default class Raw extends Uint8Array implements IU8a {
+export class Raw extends Uint8Array implements IU8a {
   public readonly registry: Registry;
 
   constructor (registry: Registry, value?: AnyU8a) {
@@ -46,14 +44,28 @@ export default class Raw extends Uint8Array implements IU8a {
    * @description returns a hash of the contents
    */
   public get hash (): H256 {
-    return new Raw(this.registry, blake2AsU8a(this.toU8a(), 256));
+    return this.registry.hash(this.toU8a());
+  }
+
+  /**
+   * @description Returns true if the wrapped value contains only ASCII printable characters
+   */
+  public get isAscii (): boolean {
+    return isAscii(this);
   }
 
   /**
    * @description Returns true if the type wraps an empty/default all-0 value
    */
   public get isEmpty (): boolean {
-    return !this.length || isUndefined(this.find((value): boolean => !!value));
+    return !this.length || isUndefined(this.find((value) => !!value));
+  }
+
+  /**
+   * @description Returns true if the wrapped value contains only utf8 characters
+   */
+  public get isUtf8 (): boolean {
+    return isUtf8(this);
   }
 
   /**
@@ -77,18 +89,29 @@ export default class Raw extends Uint8Array implements IU8a {
   public eq (other?: unknown): boolean {
     if (other instanceof Uint8Array) {
       return (this.length === other.length) &&
-        !this.some((value, index): boolean => value !== other[index]);
+        !this.some((value, index) => value !== other[index]);
     }
 
     return this.eq(decodeU8a(other));
   }
 
   /**
-   * @description Create a new subarray from the actual buffer. This is needed for compat reasons since a new Uint8Array gets returned here
+   * @description Create a new slice from the actual buffer. (compat)
+   * @param start The position to start at
+   * @param end The position to end at
+   */
+  public slice (start?: number, end?: number): Uint8Array {
+    // Like subarray below, we have to follow this approach since we are extending the TypeArray.
+    // This happens especially when it comes to further extensions, the length may be an override
+    return Uint8Array.from(this).slice(start, end);
+  }
+
+  /**
+   * @description Create a new subarray from the actual buffer. (compat)
    * @param begin The position to start at
    * @param end The position to end at
    */
-  public subarray (begin: number, end?: number): Uint8Array {
+  public subarray (begin?: number, end?: number): Uint8Array {
     return Uint8Array.from(this).subarray(begin, end);
   }
 
@@ -103,7 +126,9 @@ export default class Raw extends Uint8Array implements IU8a {
    * @description Converts the Object to to a human-friendly JSON, with additional fields, expansion and formatting of information
    */
   public toHuman (): AnyJson {
-    return this.toJSON();
+    return this.isAscii
+      ? this.toUtf8()
+      : this.toJSON();
   }
 
   /**
@@ -134,5 +159,14 @@ export default class Raw extends Uint8Array implements IU8a {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public toU8a (isBare?: boolean): Uint8Array {
     return Uint8Array.from(this);
+  }
+
+  /**
+   * @description Returns the wrapped data as a UTF-8 string
+   */
+  public toUtf8 (): string {
+    assert(this.isUtf8, 'The character sequence is not a valid Utf8 string');
+
+    return u8aToString(this);
   }
 }

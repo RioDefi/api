@@ -1,11 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { CodecTo } from '../types';
+import type { CodecTo } from '../types';
 
 import { TypeRegistry } from '../create';
-import Raw from './Raw';
+import { Raw } from '.';
 
 const registry = new TypeRegistry();
 
@@ -23,7 +22,7 @@ const testEncode = (to: CodecTo, expected: any): void =>
     expect(e[to]()).toEqual(expected);
   });
 
-describe('U8a', (): void => {
+describe('Raw', (): void => {
   let u8a: Raw;
 
   beforeEach((): void => {
@@ -73,6 +72,22 @@ describe('U8a', (): void => {
 
     it('compares against hex inputs', (): void => {
       expect(u8a.eq('0x0102030405')).toBe(true);
+    });
+
+    it('has valid isAscii', (): void => {
+      expect(u8a.isAscii).toBe(false);
+      expect(new Raw(registry, '0x2021222324').isAscii).toBe(true);
+    });
+
+    it('has valid toUtf8', (): void => {
+      expect(new Raw(registry, 'Приветствую, ми').toUtf8()).toEqual('Приветствую, ми');
+      expect(new Raw(registry, '0xe4bda0e5a5bd').toUtf8()).toEqual('你好');
+    });
+
+    it('throws on invalid utf8', (): void => {
+      expect(
+        () => new Raw(registry, '0x7f07b1f87709608bee603bbc79a0dfc29cd315c1351a83aa31adf7458d7d3003').toUtf8()
+      ).toThrow(/The character sequence is not a valid Utf8 string/);
     });
   });
 });

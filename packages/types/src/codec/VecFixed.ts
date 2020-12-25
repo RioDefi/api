@@ -1,20 +1,20 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Codec, Constructor, InterfaceTypes, Registry } from '../types';
+import type { Codec, Constructor, InterfaceTypes, Registry } from '../types';
 
-import { assert, isU8a, u8aConcat, compactToU8a } from '@polkadot/util';
-import AbstractArray from './AbstractArray';
+import { assert, compactToU8a, isU8a, u8aConcat } from '@polkadot/util';
+
+import { AbstractArray } from './AbstractArray';
 import { typeToConstructor } from './utils';
-import Vec from './Vec';
+import { Vec } from './Vec';
 
 /**
  * @name VecFixed
  * @description
  * This manages codec arrays of a fixed length
  */
-export default class VecFixed<T extends Codec> extends AbstractArray<T> {
+export class VecFixed<T extends Codec> extends AbstractArray<T> {
   private _Type: Constructor<T>;
 
   constructor (registry: Registry, Type: Constructor<T> | keyof InterfaceTypes, length: number, value: VecFixed<any> | Uint8Array | string | any[] = [] as any[]) {

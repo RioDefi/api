@@ -1,25 +1,43 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 // order important in structs... :)
 /* eslint-disable sort-keys */
 
-import { Definitions } from '../../types';
+import type { Definitions } from '../../types';
+
+const numberTypes = {
+  Fixed64: 'Int<64, Fixed64>',
+  FixedI64: 'Int<64, FixedI64>',
+  FixedU64: 'UInt<64, FixedU64>',
+  Fixed128: 'Int<128, Fixed128>',
+  FixedI128: 'Int<128, FixedI128>',
+  FixedU128: 'UInt<128, FixedU128>',
+  I32F32: 'Int<64, I32F32>',
+  U32F32: 'UInt<64, U32F32>',
+  PerU16: 'UInt<16, PerU16>',
+  Perbill: 'UInt<32, Perbill>',
+  Percent: 'UInt<8, Percent>',
+  Permill: 'UInt<32, Permill>',
+  Perquintill: 'UInt<64, Perquintill>'
+};
 
 export default {
   rpc: {},
   types: {
+    ...numberTypes,
     AccountId: 'GenericAccountId',
     AccountIdOf: 'AccountId',
     AccountIndex: 'GenericAccountIndex',
-    Address: 'GenericAddress',
+    Address: 'LookupSource',
     AssetId: 'u32',
-    Balance: 'u128',
+    Balance: 'UInt<128, Balance>',
     BalanceOf: 'Balance',
     Block: 'GenericBlock',
     BlockNumber: 'u32',
     Call: 'GenericCall',
+    CallHash: 'Hash',
+    CallHashOf: 'CallHash',
     ChangesTrieConfiguration: {
       digestInterval: 'u32',
       digestLevels: 'u32'
@@ -43,11 +61,13 @@ export default {
       normal: 'Weight',
       operational: 'Weight'
     },
-    Fixed64: 'Int<64, Fixed64>',
-    Fixed128: 'Int<128, Fixed128>',
+    H64: '[u8; 8; H64]',
+    H128: '[u8; 16; H64]',
     H160: '[u8; 20; H160]',
     H256: '[u8; 32; H256]',
     H512: '[u8; 64; H512]',
+    H1024: '[u8; 128; H1024]',
+    H2048: '[u8; 256; H2048]',
     Hash: 'H256',
     Header: {
       parentHash: 'Hash',
@@ -56,28 +76,36 @@ export default {
       extrinsicsRoot: 'Hash',
       digest: 'Digest'
     },
+    IndicesLookupSource: 'GenericLookupSource',
     Index: 'u32',
     Justification: 'Bytes',
     KeyValue: '(StorageKey, StorageData)',
     KeyTypeId: 'u32',
     LockIdentifier: '[u8; 8]',
-    LookupSource: 'Address',
+    LookupSource: 'IndicesLookupSource',
     LookupTarget: 'AccountId',
     ModuleId: 'LockIdentifier',
+    MultiAddress: 'GenericMultiAddress',
     Moment: 'u64',
+    OpaqueCall: 'Bytes',
     Origin: 'DoNotConstruct<Origin>',
+    OriginCaller: {
+      _enum: {
+        // this should be dynamically built from the actual modules, based on index
+        System: 'SystemOrigin'
+      }
+    },
+    PalletsOrigin: 'OriginCaller',
+    PalletVersion: {
+      major: 'u16',
+      minor: 'u8',
+      patch: 'u8'
+    },
     Pays: {
       _enum: ['Yes', 'No']
     },
-    Perbill: 'u32',
-    Percent: 'u8',
-    Permill: 'u32',
-    Perquintill: 'u64',
     Phantom: 'Null',
     PhantomData: 'Null',
-    ProxyType: {
-      _enum: ['Any', 'NonTransfer', 'Governance', 'Staking']
-    },
     Releases: {
       _enum: ['V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10']
     },
@@ -90,6 +118,7 @@ export default {
       justification: 'Justification'
     },
     StorageData: 'Bytes',
+    TransactionPriority: 'u64',
     ValidatorId: 'AccountId',
     Weight: 'u64',
     WeightMultiplier: 'Fixed64',

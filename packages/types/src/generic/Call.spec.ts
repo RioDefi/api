@@ -1,17 +1,16 @@
 // Copyright 2017-2020 @polkadot/metadata authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import Metadata from '@polkadot/metadata/Metadata';
-import metadataStatic from '@polkadot/metadata/Metadata/static';
+import { Metadata } from '@polkadot/metadata';
+import metadataStatic from '@polkadot/metadata/static';
 
 import { TypeRegistry } from '../create';
-import Call from './Call';
+import { GenericCall as Call } from '.';
 
 const registry = new TypeRegistry();
+const metadata = new Metadata(registry, metadataStatic);
 
-// eslint-disable-next-line no-new
-new Metadata(registry, metadataStatic);
+registry.setMetadata(metadata);
 
 describe('Call', (): void => {
   it('handles decoding correctly (bare)', (): void => {

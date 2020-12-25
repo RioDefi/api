@@ -1,23 +1,22 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { AccountId, Balance, BlockNumber, Hash } from '@polkadot/types/interfaces';
-import { ITuple } from '@polkadot/types/types';
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { DeriveProposalImage } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Bytes, Option } from '@polkadot/types';
+import type { AccountId, Balance, BlockNumber, Hash } from '@polkadot/types/interfaces';
+import type { ITuple } from '@polkadot/types/types';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveProposalImage } from '../types';
 
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Bytes, Option } from '@polkadot/types';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 import { parseImage } from './util';
 
 type PreImage = Option<ITuple<[Bytes, AccountId, Balance, BlockNumber]>>;
 
-export function preimage (api: ApiInterfaceRx): (hash: Hash) => Observable<DeriveProposalImage | undefined> {
-  return memo((hash: Hash): Observable<DeriveProposalImage | undefined> =>
+export function preimage (instanceId: string, api: ApiInterfaceRx): (hash: Hash) => Observable<DeriveProposalImage | undefined> {
+  return memo(instanceId, (hash: Hash): Observable<DeriveProposalImage | undefined> =>
     api.query.democracy.preimages<PreImage>(hash).pipe(
       map((imageOpt) => parseImage(api, imageOpt))
     )

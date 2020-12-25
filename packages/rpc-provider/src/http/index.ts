@@ -1,14 +1,12 @@
 // Copyright 2017-2020 @polkadot/rpc-provider authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ProviderInterface, ProviderInterfaceCallback, ProviderInterfaceEmitted, ProviderInterfaceEmitCb } from '../types';
-
-import './polyfill';
+import type { ProviderInterface, ProviderInterfaceCallback, ProviderInterfaceEmitCb, ProviderInterfaceEmitted } from '../types';
 
 import { assert, logger } from '@polkadot/util';
+import { fetch } from '@polkadot/x-fetch';
 
-import Coder from '../coder';
+import { RpcCoder } from '../coder';
 import defaults from '../defaults';
 
 const ERROR_SUBSCRIBE = 'HTTP Provider does not have subscriptions, use WebSockets instead';
@@ -35,19 +33,22 @@ const l = logger('api-http');
  *
  * @see [[WsProvider]]
  */
-export default class HttpProvider implements ProviderInterface {
-  readonly #coder: Coder;
+export class HttpProvider implements ProviderInterface {
+  readonly #coder: RpcCoder;
 
   readonly #endpoint: string;
+
+  readonly #headers: Record<string, string>;
 
   /**
    * @param {string} endpoint The endpoint url starting with http://
    */
-  constructor (endpoint: string = defaults.HTTP_URL) {
+  constructor (endpoint: string = defaults.HTTP_URL, headers: Record<string, string> = {}) {
     assert(/^(https|http):\/\//.test(endpoint), `Endpoint should start with 'http://', received '${endpoint}'`);
 
-    this.#coder = new Coder();
+    this.#coder = new RpcCoder();
     this.#endpoint = endpoint;
+    this.#headers = headers;
   }
 
   /**
@@ -65,9 +66,16 @@ export default class HttpProvider implements ProviderInterface {
   }
 
   /**
+   * @description Manually connect from the connection
+   */
+  public async connect (): Promise<void> {
+    // noop
+  }
+
+  /**
    * @description Manually disconnect from the connection
    */
-  public disconnect (): void {
+  public async disconnect (): Promise<void> {
     // noop
   }
 
@@ -75,7 +83,7 @@ export default class HttpProvider implements ProviderInterface {
    * @summary Whether the node is connected or not.
    * @return {boolean} true if connected
    */
-  public isConnected (): boolean {
+  public get isConnected (): boolean {
     return true;
   }
 
@@ -102,7 +110,8 @@ export default class HttpProvider implements ProviderInterface {
       headers: {
         Accept: 'application/json',
         'Content-Length': `${body.length}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...this.#headers
       },
       method: 'POST'
     });

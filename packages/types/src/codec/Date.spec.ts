@@ -1,14 +1,13 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { CodecTo } from '../types';
+import type { CodecTo } from '../types';
 
 import BN from 'bn.js';
 
 import { TypeRegistry } from '../create';
-import U64 from '../primitive/U64';
-import CodecDate from './Date';
+import { U64 } from '../primitive';
+import { CodecDate } from './Date';
 
 describe('Date', (): void => {
   const registry = new TypeRegistry();
@@ -26,11 +25,12 @@ describe('Date', (): void => {
   });
 
   describe('encode', (): void => {
-    const testEncode = (to: 'toBn' | 'toISOString' | 'toNumber' | CodecTo, expected: BN | number | string | Uint8Array): void =>
+    const testEncode = (to: 'toBigInt' | 'toBn' | 'toISOString' | 'toNumber' | CodecTo, expected: BigInt | BN | number | string | Uint8Array): void =>
       it(`can encode ${to}`, (): void => {
         expect(new CodecDate(registry, 421)[to]()).toEqual(expected);
       });
 
+    testEncode('toBigInt', 421n);
     testEncode('toBn', new BN(421));
     testEncode('toJSON', 421);
     testEncode('toISOString', '1970-01-01T00:07:01.000Z');

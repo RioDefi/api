@@ -1,9 +1,10 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 export * from './bestNumber';
 export * from './bestNumberFinalized';
 export * from './bestNumberLag';
 export * from './getHeader';
+export * from './getBlock';
+export * from './subscribeNewBlocks';
 export * from './subscribeNewHeads';

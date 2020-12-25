@@ -1,10 +1,9 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ExtDef } from './types';
+import type { ExtDef } from './types';
 
-import EmptyCheck from './emptyCheck';
+import { emptyCheck } from './emptyCheck';
 
 const CheckMortality = {
   extra: {
@@ -22,7 +21,7 @@ export default {
       tip: 'Compact<Balance>'
     }
   },
-  CheckBlockGasLimit: EmptyCheck,
+  CheckBlockGasLimit: emptyCheck,
   CheckEra: CheckMortality,
   CheckGenesis: {
     extra: {
@@ -55,7 +54,7 @@ export default {
     },
     types: {}
   },
-  CheckWeight: EmptyCheck,
-  LockStakingStatus: EmptyCheck,
-  ValidateEquivocationReport: EmptyCheck
+  CheckWeight: emptyCheck,
+  LockStakingStatus: emptyCheck,
+  ValidateEquivocationReport: emptyCheck
 } as ExtDef;

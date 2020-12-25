@@ -1,25 +1,14 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { StorageEntryMetadataLatest, StorageEntryTypeLatest, StorageHasher } from '../interfaces/metadata';
-import { AnyJson, AnyU8a, Codec, InterfaceTypes, Registry } from '../types';
+import type { StorageEntryMetadataLatest, StorageEntryTypeLatest, StorageHasher } from '../interfaces/metadata';
+import type { AnyJson, AnyU8a, Codec, InterfaceTypes, Registry } from '../types';
+import type { StorageEntry } from './types';
 
 import { assert, isFunction, isString, isU8a } from '@polkadot/util';
 
-import { AllHashers } from '@polkadot/types/interfaces/metadata/definitions';
-import Bytes from './Bytes';
-
-export interface StorageEntry {
-  (arg?: any): Uint8Array;
-  iterKey?: (arg?: any) => Uint8Array & Codec;
-  keyPrefix: (arg?: any) => Uint8Array;
-  meta: StorageEntryMetadataLatest;
-  method: string;
-  prefix: string;
-  section: string;
-  toJSON: () => any;
-}
+import { AllHashers } from '../interfaces/metadata/definitions';
+import { Bytes } from './Bytes';
 
 interface Decoded {
   key?: Uint8Array | string;
@@ -43,30 +32,20 @@ const HASHER_MAP: Record<keyof typeof AllHashers, [number, boolean]> = {
   Twox64Concat: [8, true]
 };
 
-function getStorageType (type: StorageEntryTypeLatest, isOptionalLinked?: boolean): [boolean, string] {
+function getStorageType (type: StorageEntryTypeLatest): [boolean, string] {
   if (type.isPlain) {
     return [false, type.asPlain.toString()];
   } else if (type.isDoubleMap) {
     return [false, type.asDoubleMap.value.toString()];
   }
 
-  const map = type.asMap;
-
-  if (map.linked.isTrue) {
-    const [pre, post] = isOptionalLinked
-      ? ['Option<', '>']
-      : ['', ''];
-
-    return [true, `(${pre}${map.value.toString()}${post}, Linkage<${map.key.toString()}>)`];
-  }
-
-  return [false, map.value.toString()];
+  return [false, type.asMap.value.toString()];
 }
 
 // we unwrap the type here, turning into an output usable for createType
 /** @internal */
 export function unwrapStorageType (type: StorageEntryTypeLatest, isOptional?: boolean): keyof InterfaceTypes {
-  const [hasWrapper, outputType] = getStorageType(type, isOptional);
+  const [hasWrapper, outputType] = getStorageType(type);
 
   return isOptional && !hasWrapper
     ? `Option<${outputType}>` as keyof InterfaceTypes
@@ -151,7 +130,7 @@ function decodeArgsFromMeta (registry: Registry, value: Uint8Array, meta?: Stora
  * A representation of a storage key (typically hashed) in the system. It can be
  * constructed by passing in a raw key or a StorageEntry with (optional) arguments.
  */
-export default class StorageKey extends Bytes {
+export class StorageKey extends Bytes {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore This is assigned via this.decodeArgsFromMeta()
   private _args: Codec[];
@@ -160,21 +139,19 @@ export default class StorageKey extends Bytes {
 
   private _outputType: string;
 
-  private readonly _method?: string;
+  private _method?: string;
 
-  private readonly _section?: string;
+  private _section?: string;
 
   constructor (registry: Registry, value?: AnyU8a | StorageKey | StorageEntry | [StorageEntry, any], override: Partial<StorageKeyExtra> = {}) {
     const { key, method, section } = decodeStorageKey(value);
 
     super(registry, key);
 
-    this._method = override.method || method;
-    this._section = override.section || section;
     this._outputType = StorageKey.getType(value as StorageKey);
 
     // decode the args (as applicable based on the key and the hashers, after all init)
-    this.setMeta(StorageKey.getMeta(value as StorageKey));
+    this.setMeta(StorageKey.getMeta(value as StorageKey), override.section || section, override.method || method);
   }
 
   public static getMeta (value: StorageKey | StorageEntry | [StorageEntry, any]): StorageEntryMetadataLatest | undefined {
@@ -246,8 +223,10 @@ export default class StorageKey extends Bytes {
   /**
    * @description Sets the meta for this key
    */
-  public setMeta (meta?: StorageEntryMetadataLatest): this {
+  public setMeta (meta?: StorageEntryMetadataLatest, section?: string, method?: string): this {
     this._meta = meta;
+    this._method = method || this._method;
+    this._section = section || this._section;
 
     if (meta) {
       this._outputType = unwrapStorageType(meta.type);

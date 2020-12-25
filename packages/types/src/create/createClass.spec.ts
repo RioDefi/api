@@ -1,9 +1,7 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import { TypeDefInfo } from '../types';
-
 import { createClass, getTypeClass, TypeRegistry } from '.';
 
 describe('createClass', (): void => {
@@ -33,6 +31,10 @@ describe('getTypeClass', (): void => {
 
     getTypeClass(registry, typeDef);
 
-    expect(spy).toHaveBeenCalledWith('Unable to resolve type ABC, it will fail on construction');
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'Unable to resolve type ABC, it will fail on construction'
+    );
   });
 });

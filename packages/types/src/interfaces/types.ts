@@ -2,6 +2,7 @@
 /* eslint-disable */
 
 export * from './runtime/types';
+export * from './assets/types';
 export * from './authorship/types';
 export * from './aura/types';
 export * from './babe/types';
@@ -19,12 +20,14 @@ export * from './grandpa/types';
 export * from './identity/types';
 export * from './imOnline/types';
 export * from './offences/types';
+export * from './proxy/types';
 export * from './recovery/types';
 export * from './scheduler/types';
 export * from './session/types';
 export * from './society/types';
 export * from './staking/types';
 export * from './support/types';
+export * from './syncstate/types';
 export * from './system/types';
 export * from './treasury/types';
 export * from './txpayment/types';
@@ -33,6 +36,11 @@ export * from './vesting/types';
 export * from './attestations/types';
 export * from './claims/types';
 export * from './parachains/types';
+export * from './poll/types';
+export * from './purchase/types';
+export * from './contractsAbi/types';
+export * from './scaleInfo/types';
+export * from './eth/types';
 export * from './metadata/types';
 export * from './rpc/types';
 export * from './author/types';

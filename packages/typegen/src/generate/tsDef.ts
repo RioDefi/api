@@ -1,17 +1,18 @@
 // Copyright 2017-2020 @polkadot/typegen authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { TypeDef, TypeDefInfo } from '@polkadot/types/create/types';
-import { ModuleTypes } from '../util/imports';
+import type { TypeDef } from '@polkadot/types/create/types';
+import type { ModuleTypes } from '../util/imports';
 
 import Handlebars from 'handlebars';
 import path from 'path';
-import { getTypeDef } from '@polkadot/types/create';
-import * as defaultDefinitions from '@polkadot/types/interfaces/definitions';
-import { isString, stringCamelCase, stringUpperFirst, assert } from '@polkadot/util';
 
-import { TypeImports, createImports, exportInterface, exportType, readTemplate, formatType, setImports, writeFile } from '../util';
+import { getTypeDef } from '@polkadot/types/create';
+import { TypeDefInfo } from '@polkadot/types/create/types';
+import * as defaultDefinitions from '@polkadot/types/interfaces/definitions';
+import { assert, isString, stringCamelCase, stringUpperFirst } from '@polkadot/util';
+
+import { createImports, exportInterface, exportType, formatType, readTemplate, setImports, TypeImports, writeFile } from '../util';
 
 interface Imports extends TypeImports {
   interfaces: [string, string][];
@@ -51,10 +52,13 @@ function tsEnum (definitions: Record<string, ModuleTypes>, { name: enumName, sub
 
   const keys = (sub as TypeDef[]).map(({ info, name = '', type }): string => {
     const getter = stringUpperFirst(stringCamelCase(name.replace(' ', '_')));
-    const asGetter = type === 'Null'
+    const isComplexType = [TypeDefInfo.Tuple, TypeDefInfo.VecFixed].includes(info);
+    const asGetter = type === 'Null' || info === TypeDefInfo.DoNotConstruct
       ? ''
-      : createGetter(definitions, `as${getter}`, info === TypeDefInfo.Tuple ? formatType(definitions, type, imports) : type, imports);
-    const isGetter = createGetter(definitions, `is${getter}`, 'boolean', imports);
+      : createGetter(definitions, `as${getter}`, isComplexType ? formatType(definitions, type, imports) : type, imports);
+    const isGetter = info === TypeDefInfo.DoNotConstruct
+      ? ''
+      : createGetter(definitions, `is${getter}`, 'boolean', imports);
 
     switch (info) {
       case TypeDefInfo.Compact:
@@ -62,7 +66,11 @@ function tsEnum (definitions: Record<string, ModuleTypes>, { name: enumName, sub
       case TypeDefInfo.Tuple:
       case TypeDefInfo.Vec:
       case TypeDefInfo.Option:
+      case TypeDefInfo.VecFixed:
         return `${isGetter}${asGetter}`;
+
+      case TypeDefInfo.DoNotConstruct:
+        return '';
 
       default:
         throw new Error(`Enum: ${enumName || 'undefined'}: Unhandled type ${TypeDefInfo[info]}`);
@@ -116,7 +124,7 @@ function tsSet (definitions: Record<string, ModuleTypes>, { name: setName, sub }
   setImports(definitions, imports, ['Set']);
 
   const types = (sub as TypeDef[]).map(({ name }): string => {
-    assert(!!name, 'Invalid TypeDef found, no name specified');
+    assert(name, 'Invalid TypeDef found, no name specified');
 
     return createGetter(definitions, `is${name}`, 'boolean', imports);
   });
@@ -182,7 +190,7 @@ function generateInterfaces (definitions: Record<string, ModuleTypes>, { types }
   };
 
   return Object.entries(types).map(([name, type]): [string, string] => {
-    const def = getTypeDef(isString(type) ? type.toString() : JSON.stringify(type), { name });
+    const def = getTypeDef(isString(type) ? type : JSON.stringify(type), { name });
 
     return [name, generators[def.info](definitions, def, imports)];
   });
@@ -242,7 +250,7 @@ export function generateTsDef (importDefinitions: { [importPath: string]: Record
 }
 
 /** @internal */
-export default function generateTsDefDefault (): void {
+export function generateDefaultTsDef (): void {
   generateTsDef(
     { '@polkadot/types/interfaces': defaultDefinitions },
     'packages/types/src/interfaces',

@@ -1,10 +1,9 @@
 // Copyright 2017-2020 @polkadot/rpc-provider authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import WsProvider from './';
-import { Mock } from './../mock/types';
 import { mockWs, TEST_WS_URL } from '../../test/mockWs';
+import { Mock } from './../mock/types';
+import { WsProvider } from './';
 
 let ws: WsProvider;
 let mock: Mock;
@@ -25,8 +24,14 @@ describe('Ws', (): void => {
 
   it('returns the connected state', (): void => {
     expect(
-      createWs([]).isConnected()
+      createWs([]).isConnected
     ).toEqual(false);
+  });
+
+  it('allows you to initialize the provider with custom headers', (): void => {
+    expect(
+      (): WsProvider => new WsProvider(TEST_WS_URL, 1000, { foo: 'bar' })
+    ).not.toThrow();
   });
 });
 

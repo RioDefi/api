@@ -1,17 +1,17 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { CodecTo } from '../types';
+import type { CodecTo } from '../types';
+
+import { Raw } from '../codec/Raw';
 import { TypeRegistry } from '../create';
-import Raw from '../codec/Raw';
-import Text from './Text';
+import { Text } from '.';
 
 describe('Text', (): void => {
   const registry = new TypeRegistry();
 
   describe('decode', (): void => {
-    const testDecode = (type: string, input: string | Uint8Array | { toString: () => string }, expected: string, toFn: 'toString' | 'toHex' = 'toString'): void =>
+    const testDecode = (type: string, input: null | string | Uint8Array | { toString: () => string }, expected: string, toFn: 'toString' | 'toHex' = 'toString'): void =>
       it(`can decode from ${type}`, (): void => {
         expect(new Text(registry, input)[toFn]()).toBe(expected);
       });
@@ -22,6 +22,7 @@ describe('Text', (): void => {
     testDecode('Raw', new Raw(registry, Uint8Array.from([102, 111, 111])), 'foo'); // no length
     testDecode('object with `toString()`', { toString (): string { return 'foo'; } }, 'foo');
     testDecode('hex input value', new Text(registry, '0x12345678'), '0x12345678', 'toHex');
+    testDecode('null', null, '');
   });
 
   describe('encode', (): void => {

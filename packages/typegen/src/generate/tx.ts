@@ -1,26 +1,25 @@
 // Copyright 2017-2020 @polkadot/typegen authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
+
+import type { Registry } from '@polkadot/types/types';
 
 import Handlebars from 'handlebars';
 
-import { Registry } from '@polkadot/types/types';
-
-import staticData from '@polkadot/metadata/Metadata/static';
-import Metadata from '@polkadot/metadata/Metadata';
+import { Metadata } from '@polkadot/metadata/Metadata';
+import staticData from '@polkadot/metadata/static';
+import { TypeRegistry } from '@polkadot/types/create';
 import * as defaultDefs from '@polkadot/types/interfaces/definitions';
 import { Text } from '@polkadot/types/primitive';
-import { TypeRegistry } from '@polkadot/types/create';
 import { stringCamelCase } from '@polkadot/util';
 
-import { createImports, compareName, formatType, getSimilarTypes, readTemplate, registerDefinitions, setImports, writeFile } from '../util';
+import { compareName, createImports, getSimilarTypes, readTemplate, registerDefinitions, setImports, writeFile } from '../util';
 
 const MAPPED_NAMES: Record<string, string> = {
   new: 'updated'
 };
 
 function mapName (_name: Text): string {
-  const name = stringCamelCase(_name.toString());
+  const name = stringCamelCase(_name);
 
   return MAPPED_NAMES[name] || name;
 }
@@ -49,25 +48,24 @@ function generateForMeta (registry: Registry, meta: Metadata, dest: string, extr
             const params = args
               .map(({ name, type }) => {
                 const typeStr = type.toString();
-                const similarTypes = getSimilarTypes(allDefs, registry, typeStr, imports).map((type): string => formatType(allDefs, type, imports));
-                const nameStr = mapName(name);
+                const similarTypes = getSimilarTypes(registry, allDefs, typeStr, imports);
 
-                setImports(allDefs, imports, [...similarTypes.filter((type): boolean => !type.startsWith('(') && !type.startsWith('{')), typeStr]);
+                setImports(allDefs, imports, [typeStr, ...similarTypes]);
 
-                return `${nameStr}: ${similarTypes.join(' | ')}`;
+                return `${mapName(name)}: ${similarTypes.join(' | ')}`;
               })
               .join(', ');
 
             return {
               docs: documentation,
-              name: stringCamelCase(name.toString()),
+              name: stringCamelCase(name),
               params
             };
           });
 
         return {
           items,
-          name: stringCamelCase(name.toString())
+          name: stringCamelCase(name)
         };
       });
 
@@ -94,10 +92,14 @@ function generateForMeta (registry: Registry, meta: Metadata, dest: string, extr
 
 // Call `generateForMeta()` with current static metadata
 /** @internal */
-export default function generateTx (dest = 'packages/api/src/augment/tx.ts', data = staticData, extraTypes: Record<string, Record<string, { types: Record<string, any> }>> = {}, isStrict = false): void {
+export function generateDefaultTx (dest = 'packages/api/src/augment/tx.ts', data = staticData, extraTypes: Record<string, Record<string, { types: Record<string, any> }>> = {}, isStrict = false): void {
   const registry = new TypeRegistry();
 
   registerDefinitions(registry, extraTypes);
 
-  return generateForMeta(registry, new Metadata(registry, data), dest, extraTypes, isStrict);
+  const metadata = new Metadata(registry, data);
+
+  registry.setMetadata(metadata);
+
+  return generateForMeta(registry, metadata, dest, extraTypes, isStrict);
 }

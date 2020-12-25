@@ -1,15 +1,14 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 
-import { Observable, from } from 'rxjs';
-import ApiRx from '@polkadot/api/rx/Api';
-import MockProvider from '@polkadot/rpc-provider/mock';
-import { TypeRegistry } from '@polkadot/types';
+import { ApiRx } from '@polkadot/api/rx';
+import { MockProvider } from '@polkadot/rpc-provider/mock';
+import { TypeRegistry } from '@polkadot/types/create';
+import { from, Observable } from '@polkadot/x-rxjs';
 
 import { ExactDerive } from '.';
 

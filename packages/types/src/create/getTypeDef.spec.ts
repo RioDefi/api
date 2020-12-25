@@ -1,24 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { TypeDef, TypeDefInfo } from './types';
-
-import { TypeRegistry, getTypeDef } from '.';
+import { TypeDefInfo } from './types';
+import { getTypeDef, TypeRegistry } from '.';
 
 describe('getTypeDef', (): void => {
-  it('does not allow invalid tuples, end )', (): void => {
-    expect(
-      (): TypeDef => getTypeDef('(u64, u32')
-    ).toThrow(/Expected '\(' closing with '\)'/);
-  });
-
-  it('does not allow invalid vectors, end >', (): void => {
-    expect(
-      (): TypeDef => getTypeDef('Vec<u64')
-    ).toThrow(/Unable to find closing matching/);
-  });
-
   it('maps empty tuples to empty tuple', (): void => {
     expect(
       getTypeDef('()')

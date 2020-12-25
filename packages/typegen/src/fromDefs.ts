@@ -1,15 +1,15 @@
 // Copyright 2017-2020 @polkadot/typegen authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
 import path from 'path';
 import yargs from 'yargs';
+
 import * as substrateDefs from '@polkadot/types/interfaces/definitions';
 
 import { generateInterfaceTypes } from './generate/interfaceRegistry';
 import { generateTsDef } from './generate/tsDef';
 
-export default function main (): void {
+export function main (): void {
   const { input, package: pkg } = yargs.strict().options({
     input: {
       description: 'The directory to use for the user definitions',

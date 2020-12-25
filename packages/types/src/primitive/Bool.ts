@@ -1,12 +1,10 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { H256 } from '../interfaces/runtime';
-import { Codec, Registry } from '../types';
+import type { H256 } from '../interfaces/runtime';
+import type { Codec, Registry } from '../types';
 
 import { isU8a, u8aToHex } from '@polkadot/util';
-import { blake2AsU8a } from '@polkadot/util-crypto';
 
 /** @internal */
 function decodeBool (value: any): boolean {
@@ -20,16 +18,16 @@ function decodeBool (value: any): boolean {
 }
 
 /**
- * @name Bool
+ * @name bool
  * @description
  * Representation for a boolean value in the system. It extends the base JS `Boolean` class
  * @noInheritDoc
  */
-export default class Bool extends Boolean implements Codec {
+export class bool extends Boolean implements Codec {
   public readonly registry: Registry;
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  constructor (registry: Registry, value: Bool | Boolean | Uint8Array | boolean | number = false) {
+  constructor (registry: Registry, value: bool | Boolean | Uint8Array | boolean | number = false) {
     super(decodeBool(value));
 
     this.registry = registry;
@@ -46,7 +44,7 @@ export default class Bool extends Boolean implements Codec {
    * @description returns a hash of the contents
    */
   public get hash (): H256 {
-    return this.registry.createType('H256', blake2AsU8a(this.toU8a(), 256));
+    return this.registry.hash(this.toU8a());
   }
 
   /**

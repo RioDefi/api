@@ -1,17 +1,17 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Observable } from '@polkadot/x-rxjs';
 
-import { Observable, combineLatest, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { combineLatest, of } from '@polkadot/x-rxjs';
+import { catchError, map } from '@polkadot/x-rxjs/operators';
 
 import { HeaderExtended } from '../type';
 import { memo } from '../util';
 
 /**
- * @name bestNumberFinalized
+ * @name getHeader
  * @param {( Uint8Array | string )} hash - A block hash as U8 array or string.
  * @returns An array containing the block header and the block author
  * @description Get a specific block header and extend it with the author
@@ -24,8 +24,8 @@ import { memo } from '../util';
  * console.log(`block #${number} was authored by ${author}`);
  * ```
  */
-export function getHeader (api: ApiInterfaceRx): (hash: Uint8Array | string) => Observable<HeaderExtended | undefined> {
-  return memo((hash: Uint8Array | string): Observable<HeaderExtended | undefined> =>
+export function getHeader (instanceId: string, api: ApiInterfaceRx): (hash: Uint8Array | string) => Observable<HeaderExtended | undefined> {
+  return memo(instanceId, (hash: Uint8Array | string): Observable<HeaderExtended | undefined> =>
     combineLatest([
       api.rpc.chain.getHeader(hash),
       api.query.session

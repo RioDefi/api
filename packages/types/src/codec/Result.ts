@@ -1,19 +1,18 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Codec, Constructor, InterfaceTypes, Registry } from '../types';
+import type { Codec, Constructor, InterfaceTypes, Registry } from '../types';
 
 import { assert } from '@polkadot/util';
 
-import Enum from './Enum';
+import { Enum } from './Enum';
 
 /**
  * @name Result
  * @description
  * A Result maps to the Rust Result type, that can either wrap a success or error value
  */
-export default class Result<O extends Codec, E extends Codec> extends Enum {
+export class Result<O extends Codec, E extends Codec> extends Enum {
   constructor (registry: Registry, Ok: Constructor<O> | keyof InterfaceTypes, Error: Constructor<E> | keyof InterfaceTypes, value?: unknown) {
     // NOTE This is order-dependent, Ok (with index 0) needs to be first
     // eslint-disable-next-line sort-keys
@@ -50,7 +49,7 @@ export default class Result<O extends Codec, E extends Codec> extends Enum {
    * @description Checks if the Result has no value
    */
   public get isEmpty (): boolean {
-    return this.isOk && this._raw.isEmpty;
+    return this.isOk && this.value.isEmpty;
   }
 
   /**

@@ -1,13 +1,14 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { DeriveContractFees } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveContractFees } from '../types';
 
 import BN from 'bn.js';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+
+import { of } from '@polkadot/x-rxjs';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
@@ -45,8 +46,8 @@ function queryConstants (api: ApiInterfaceRx): Observable<ResultV2> {
  * });
  * ```
  */
-export function fees (api: ApiInterfaceRx): () => Observable<DeriveContractFees> {
-  return memo((): Observable<DeriveContractFees> => {
+export function fees (instanceId: string, api: ApiInterfaceRx): () => Observable<DeriveContractFees> {
+  return memo(instanceId, (): Observable<DeriveContractFees> => {
     return queryConstants(api).pipe(
       map(([callBaseFee, contractFee, creationFee, transactionBaseFee, transactionByteFee, transferFee, rentByteFee, rentDepositOffset, surchargeReward, tombstoneDeposit]): DeriveContractFees => ({
         callBaseFee,

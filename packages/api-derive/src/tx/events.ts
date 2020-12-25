@@ -1,12 +1,12 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { EventRecord, Hash, SignedBlock } from '@polkadot/types/interfaces';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { EventRecord, Hash, SignedBlock } from '@polkadot/types/interfaces';
+import type { Observable } from '@polkadot/x-rxjs';
 
-import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ApiInterfaceRx } from '@polkadot/api/types';
+import { combineLatest } from '@polkadot/x-rxjs';
+import { map } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
@@ -15,8 +15,8 @@ interface Result {
   events: EventRecord[];
 }
 
-export function events (api: ApiInterfaceRx): (at: Hash) => Observable<Result> {
-  return memo((at: Hash): Observable<Result> =>
+export function events (instanceId: string, api: ApiInterfaceRx): (at: Hash) => Observable<Result> {
+  return memo(instanceId, (at: Hash): Observable<Result> =>
     combineLatest([
       api.query.system.events.at(at),
       api.rpc.chain.getBlock(at)

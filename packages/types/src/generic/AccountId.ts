@@ -1,17 +1,18 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { AnyString, AnyU8a, Registry } from '../types';
+import type { AnyString, AnyU8a, Registry } from '../types';
 
-import { hexToU8a, isHex, isString, isU8a, u8aToU8a } from '@polkadot/util';
+import { assert, hexToU8a, isHex, isString, isU8a, u8aToU8a } from '@polkadot/util';
 import { decodeAddress, encodeAddress } from '@polkadot/util-crypto';
 
-import U8aFixed from '../codec/U8aFixed';
+import { U8aFixed } from '../codec/U8aFixed';
 
 /** @internal */
-function decodeAccountId (value: AnyU8a | AnyString): AnyU8a {
-  if (isU8a(value) || Array.isArray(value)) {
+function decodeAccountId (value?: AnyU8a | AnyString): Uint8Array {
+  if (!value) {
+    return new Uint8Array();
+  } else if (isU8a(value) || Array.isArray(value)) {
     return u8aToU8a(value);
   } else if (isHex(value)) {
     return hexToU8a(value.toString());
@@ -19,19 +20,24 @@ function decodeAccountId (value: AnyU8a | AnyString): AnyU8a {
     return decodeAddress((value as string).toString());
   }
 
-  return value;
+  throw new Error('Unknown type passed to AccountId constructor');
 }
 
 /**
- * @name AccountId
+ * @name GenericAccountId
  * @description
  * A wrapper around an AccountId/PublicKey representation. Since we are dealing with
  * underlying PublicKeys (32 bytes in length), we extend from U8aFixed which is
  * just a Uint8Array wrapper with a fixed length.
  */
-export default class AccountId extends U8aFixed {
-  constructor (registry: Registry, value: AnyU8a = new Uint8Array()) {
-    super(registry, decodeAccountId(value), 256);
+export class GenericAccountId extends U8aFixed {
+  constructor (registry: Registry, value?: AnyU8a) {
+    const decoded = decodeAccountId(value);
+
+    // Part of stream containing >= 32 bytes or a all empty (defaults)
+    assert(decoded.length >= 32 || !decoded.some((b) => b), `Invalid AccountId provided, expected 32 bytes, found ${decoded.length}`);
+
+    super(registry, decoded, 256);
   }
 
   public static encode (value: Uint8Array, ss58Format?: number): string {
@@ -63,7 +69,7 @@ export default class AccountId extends U8aFixed {
    * @description Returns the string representation of the value
    */
   public toString (): string {
-    return AccountId.encode(this, this.registry.chainSS58);
+    return GenericAccountId.encode(this, this.registry.chainSS58);
   }
 
   /**

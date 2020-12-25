@@ -1,16 +1,16 @@
 // Copyright 2017-2020 @polkadot/api-derive authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { AccountId, Balance, Hash, PropIndex } from '@polkadot/types/interfaces';
-import { ITuple } from '@polkadot/types/types';
-import { DeriveProposalImage, DeriveProposal } from '../types';
+import type { ApiInterfaceRx } from '@polkadot/api/types';
+import type { Option, Vec } from '@polkadot/types';
+import type { AccountId, Balance, Hash, PropIndex } from '@polkadot/types/interfaces';
+import type { ITuple } from '@polkadot/types/types';
+import type { Observable } from '@polkadot/x-rxjs';
+import type { DeriveProposal, DeriveProposalImage } from '../types';
 
-import { Observable, combineLatest, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
-import { ApiInterfaceRx } from '@polkadot/api/types';
-import { Option, Vec } from '@polkadot/types';
 import { isFunction } from '@polkadot/util';
+import { combineLatest, of } from '@polkadot/x-rxjs';
+import { map, switchMap } from '@polkadot/x-rxjs/operators';
 
 import { memo } from '../util';
 
@@ -49,8 +49,8 @@ function parse ([proposals, images, optDepositors]: Result): DeriveProposal[] {
     });
 }
 
-export function proposals (api: ApiInterfaceRx): () => Observable<DeriveProposal[]> {
-  return memo((): Observable<DeriveProposal[]> =>
+export function proposals (instanceId: string, api: ApiInterfaceRx): () => Observable<DeriveProposal[]> {
+  return memo(instanceId, (): Observable<DeriveProposal[]> =>
     api.query.democracy?.publicProps && api.query.democracy?.preimages
       ? api.query.democracy.publicProps<Proposals>().pipe(
         switchMap((proposals) =>

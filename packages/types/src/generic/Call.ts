@@ -1,19 +1,20 @@
 // Copyright 2017-2020 @polkadot/metadata authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { FunctionArgumentMetadataLatest, FunctionMetadataLatest } from '../interfaces/metadata';
-import { AnyJson, AnyU8a, ArgsDef, CallFunction, Codec, IMethod, Registry } from '../types';
+import type { FunctionArgumentMetadataLatest, FunctionMetadataLatest } from '../interfaces/metadata';
+import type { AnyJson, AnyU8a, ArgsDef, CallFunction, Codec, IMethod, Registry } from '../types';
 
-import { isHex, isObject, isU8a, u8aToHex, u8aToU8a } from '@polkadot/util';
+import { isHex, isObject, isU8a, u8aToU8a } from '@polkadot/util';
 
-import { getTypeDef, getTypeClass } from '../create';
-import Struct from '../codec/Struct';
-import U8aFixed from '../codec/U8aFixed';
+import { Struct } from '../codec/Struct';
+import { U8aFixed } from '../codec/U8aFixed';
+import { getTypeClass } from '../create/createClass';
+import { getTypeDef } from '../create/getTypeDef';
 
 interface DecodeMethodInput {
   args: unknown;
-  callIndex: CallIndex | Uint8Array;
+  // eslint-disable-next-line no-use-before-define
+  callIndex: GenericCallIndex | Uint8Array;
 }
 
 interface DecodedMethod extends DecodeMethodInput {
@@ -30,8 +31,8 @@ interface DecodedMethod extends DecodeMethodInput {
  */
 function getArgsDef (registry: Registry, meta: FunctionMetadataLatest): ArgsDef {
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  return Call.filterOrigin(meta).reduce((result, { name, type }): ArgsDef => {
-    const Type = getTypeClass(registry, getTypeDef(type.toString()));
+  return GenericCall.filterOrigin(meta).reduce((result, { name, type }): ArgsDef => {
+    const Type = getTypeClass(registry, getTypeDef(type));
 
     result[name.toString()] = Type;
 
@@ -46,7 +47,7 @@ function decodeCallViaObject (registry: Registry, value: DecodedMethod, _meta?: 
 
   // Get the correct lookupIndex
   // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  const lookupIndex = callIndex instanceof CallIndex
+  const lookupIndex = callIndex instanceof GenericCallIndex
     ? callIndex.toU8a()
     : callIndex;
 
@@ -101,33 +102,46 @@ function decodeCall (registry: Registry, value: unknown | DecodedMethod | Uint8A
 }
 
 /**
- * @name CallIndex
+ * @name GenericCallIndex
  * @description
  * A wrapper around the `[sectionIndex, methodIndex]` value that uniquely identifies a method
  */
-export class CallIndex extends U8aFixed {
+export class GenericCallIndex extends U8aFixed {
   constructor (registry: Registry, value?: AnyU8a) {
     super(registry, value, 16);
   }
 }
 
 /**
- * @name Call
+ * @name GenericCall
  * @description
- * Extrinsic function descriptor, as defined in
- * {@link https://github.com/paritytech/wiki/blob/master/Extrinsic.md#the-extrinsic-format-for-node}.
+ * Extrinsic function descriptor
  */
-export default class Call extends Struct implements IMethod {
+export class GenericCall extends Struct implements IMethod {
   protected _meta: FunctionMetadataLatest;
 
   constructor (registry: Registry, value: unknown, meta?: FunctionMetadataLatest) {
     const decoded = decodeCall(registry, value, meta);
 
-    super(registry, {
-      callIndex: CallIndex,
-      // eslint-disable-next-line sort-keys
-      args: Struct.with(decoded.argsDef)
-    }, decoded);
+    try {
+      super(registry, {
+        callIndex: GenericCallIndex,
+        // eslint-disable-next-line sort-keys
+        args: Struct.with(decoded.argsDef)
+      }, decoded);
+    } catch (error) {
+      let method = 'unknown.unknown';
+
+      try {
+        const c = registry.findMetaCall(decoded.callIndex);
+
+        method = `${c.section}.${c.method}`;
+      } catch (error) {
+        // ignore
+      }
+
+      throw new Error(`Call: failed decoding ${method}:: ${(error as Error).message}`);
+    }
 
     this._meta = decoded.meta;
   }
@@ -161,7 +175,7 @@ export default class Call extends Struct implements IMethod {
    * @description The encoded `[sectionIndex, methodIndex]` identifier
    */
   public get callIndex (): Uint8Array {
-    return (this.get('callIndex') as CallIndex).toU8a();
+    return (this.get('callIndex') as GenericCallIndex).toU8a();
   }
 
   /**
@@ -218,7 +232,7 @@ export default class Call extends Struct implements IMethod {
   /**
    * @description Converts the Object to to a human-friendly JSON, with additional fields, expansion and formatting of information
    */
-  public toHuman (isExpanded?: boolean): AnyJson {
+  public toHuman (isExpanded?: boolean): Record<string, AnyJson> {
     let call: CallFunction | undefined;
 
     try {
@@ -229,7 +243,11 @@ export default class Call extends Struct implements IMethod {
 
     return {
       args: this.args.map((arg) => arg.toHuman(isExpanded)),
-      callIndex: u8aToHex(this.callIndex),
+      // args: this.args.map((arg, index) => call
+      //   ? { [call.meta.args[index].name.toString()]: arg.toHuman(isExpanded) }
+      //   : arg.toHuman(isExpanded)
+      // ),
+      // callIndex: u8aToHex(this.callIndex),
       method: call?.method,
       section: call?.section,
       ...(isExpanded && call

@@ -1,13 +1,11 @@
 // Copyright 2017-2020 @polkadot/types authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
-/* eslint-disable @typescript-eslint/no-use-before-define */
-
-type Mapper = (value: string, options?: SanitizeOptions) => string;
+// SPDX-License-Identifier: Apache-2.0
 
 interface SanitizeOptions {
   allowNamespaces?: boolean;
 }
+
+type Mapper = (value: string, options?: SanitizeOptions) => string;
 
 const ALLOWED_BOXES = ['BTreeMap', 'BTreeSet', 'Compact', 'DoNotConstruct', 'HashMap', 'Int', 'Linkage', 'Result', 'Option', 'UInt', 'Vec'];
 const BOX_PRECEDING = ['<', '(', '[', '"', ',', ' ']; // start of vec, tuple, fixed array, part of struct def or in tuple
@@ -15,6 +13,7 @@ const BOX_PRECEDING = ['<', '(', '[', '"', ',', ' ']; // start of vec, tuple, fi
 const mappings: Mapper[] = [
   // alias <T::InherentOfflineReport as InherentOfflineReport>::Inherent -> InherentOfflineReport
   alias(['<T::InherentOfflineReport as InherentOfflineReport>::Inherent'], 'InherentOfflineReport', false),
+  alias(['VecDeque<'], 'Vec<', false),
   // <T::Balance as HasCompact>
   cleanupCompact(),
   // Remove all the trait prefixes
@@ -213,8 +212,9 @@ export function removeWrap (_check: string): Mapper {
   };
 }
 
-export default function sanitize (value: string, options?: SanitizeOptions): string {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function sanitize (value: String | string, options?: SanitizeOptions): string {
   return mappings.reduce((result, fn): string => {
     return fn(result, options);
-  }, value).trim();
+  }, value.toString()).trim();
 }

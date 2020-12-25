@@ -1,25 +1,29 @@
 // Copyright 2017-2020 @polkadot/rpc-core authors & contributors
-// This software may be modified and distributed under the terms
-// of the Apache-2.0 license. See the LICENSE file for details.
+// SPDX-License-Identifier: Apache-2.0
 
-import { ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
-import { Hash } from '@polkadot/types/interfaces';
-import { AnyJson, Codec, DefinitionRpc, DefinitionRpcExt, DefinitionRpcSub, Registry } from '@polkadot/types/types';
-import { RpcInterface, RpcInterfaceMethod } from './types';
+import type { ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
+import type { StorageKey, Vec } from '@polkadot/types';
+import type { Hash } from '@polkadot/types/interfaces';
+import type { AnyJson, Codec, DefinitionRpc, DefinitionRpcExt, DefinitionRpcSub, Registry } from '@polkadot/types/types';
+import type { Memoized } from '@polkadot/util/types';
+import type { Observer } from '@polkadot/x-rxjs';
+import type { RpcInterface, RpcInterfaceMethod } from './types';
 
-import memoizee from 'memoizee';
-import { combineLatest, from, Observable, Observer, of, throwError } from 'rxjs';
-import { catchError, map, publishReplay, refCount, switchMap } from 'rxjs/operators';
+import { Option } from '@polkadot/types';
+import { createClass, createTypeUnsafe } from '@polkadot/types/create';
 import jsonrpc from '@polkadot/types/interfaces/jsonrpc';
-import { Option, StorageKey, Vec, createClass, createTypeUnsafe } from '@polkadot/types';
-import { assert, hexToU8a, isFunction, isNull, isUndefined, logger, u8aToU8a } from '@polkadot/util';
+import { assert, hexToU8a, isFunction, isNull, isUndefined, logger, memoize, u8aToU8a } from '@polkadot/util';
+import { Observable } from '@polkadot/x-rxjs';
+import { publishReplay, refCount } from '@polkadot/x-rxjs/operators';
 
-import { drr } from './rxjs';
+import { drr, refCountDelay } from './util';
 
 interface StorageChangeSetJSON {
   block: string;
   changes: [string, string | null][];
 }
+
+type OutputType = 'json' | 'raw' | 'scale';
 
 const l = logger('rpc-core');
 
@@ -42,6 +46,12 @@ function logErrorMessage (method: string, { params, type }: DefinitionRpc, error
   l.error(`${method}(${inputs}): ${type}:: ${error.message}`);
 }
 
+function isTreatAsHex (key: StorageKey): boolean {
+  // :code is problematic - it does not have the length attached, which is
+  // unlike all other storage entries where it is indeed properly encoded
+  return ['0x3a636f6465'].includes(key.toHex());
+}
+
 /**
  * @name Rpc
  * @summary The API may use a HTTP or WebSockets provider.
@@ -59,20 +69,24 @@ function logErrorMessage (method: string, { params, type }: DefinitionRpc, error
  *
  * ```javascript
  * import Rpc from '@polkadot/rpc-core';
- * import WsProvider from '@polkadot/rpc-provider/ws';
+ * import { WsProvider } from '@polkadot/rpc-provider/ws';
  *
  * const provider = new WsProvider('ws://127.0.0.1:9944');
  * const rpc = new Rpc(provider);
  * ```
  */
-export default class Rpc implements RpcInterface {
+export class RpcCore implements RpcInterface {
+  #instanceId: string;
+
+  #registryDefault: Registry;
+
+  #getBlockRegistry?: (blockHash: string | Uint8Array) => Promise<{ registry: Registry }>;
+
   readonly #storageCache = new Map<string, string | null>();
 
   public readonly mapping = new Map<string, DefinitionRpcExt>();
 
   public readonly provider: ProviderInterface;
-
-  public readonly registry: Registry;
 
   public readonly sections: string[] = [];
 
@@ -92,6 +106,8 @@ export default class Rpc implements RpcInterface {
 
   public readonly engine!: RpcInterface['engine'];
 
+  public readonly eth!: RpcInterface['eth'];
+
   public readonly grandpa!: RpcInterface['grandpa'];
 
   public readonly offchain!: RpcInterface['offchain'];
@@ -102,6 +118,8 @@ export default class Rpc implements RpcInterface {
 
   public readonly state!: RpcInterface['state'];
 
+  public readonly syncstate!: RpcInterface['syncstate'];
+
   public readonly system!: RpcInterface['system'];
 
   /**
@@ -109,49 +127,81 @@ export default class Rpc implements RpcInterface {
    * Default constructor for the Api Object
    * @param  {ProviderInterface} provider An API provider using HTTP or WebSocket
    */
-  constructor (registry: Registry, provider: ProviderInterface, userRpc: Record<string, Record<string, DefinitionRpc | DefinitionRpcSub>> = {}) {
+  constructor (instanceId: string, registry: Registry, provider: ProviderInterface, userRpc: Record<string, Record<string, DefinitionRpc | DefinitionRpcSub>> = {}) {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     assert(provider && isFunction(provider.send), 'Expected Provider to API create');
 
-    this.registry = registry;
+    this.#instanceId = instanceId;
+    this.#registryDefault = registry;
     this.provider = provider;
 
-    this._createInterfaces(userRpc);
-  }
-
-  /**
-   * @description Manually disconnect from the attached provider
-   */
-  public disconnect (): void {
-    this.provider.disconnect();
-  }
-
-  private _createInterfaces<Section extends keyof RpcInterface> (userRpc: Record<string, Record<string, DefinitionRpc | DefinitionRpcSub>>): void {
     const sectionNames = Object.keys(jsonrpc);
 
     // these are the base keys (i.e. part of jsonrpc)
     this.sections.push(...sectionNames);
 
+    this.addUserInterfaces(userRpc);
+  }
+
+  /**
+   * @description Returns the connected status of a provider
+   */
+  public get isConnected (): boolean {
+    return this.provider.isConnected;
+  }
+
+  /**
+   * @description Manually connect from the attached provider
+   */
+  public connect (): Promise<void> {
+    return this.provider.connect();
+  }
+
+  /**
+   * @description Manually disconnect from the attached provider
+   */
+  public disconnect (): Promise<void> {
+    return this.provider.disconnect();
+  }
+
+  /**
+   * @description Sets a registry swap (typically from Api)
+   */
+  public setRegistrySwap (registrySwap: (blockHash: string | Uint8Array) => Promise<{ registry: Registry }>): void {
+    this.#getBlockRegistry = registrySwap;
+  }
+
+  public addUserInterfaces<Section extends keyof RpcInterface> (userRpc: Record<string, Record<string, DefinitionRpc | DefinitionRpcSub>>): void {
     // add any extra user-defined sections
-    this.sections.push(...Object.keys(userRpc).filter((key): boolean => !this.sections.includes(key)));
+    this.sections.push(...Object.keys(userRpc).filter((key) => !this.sections.includes(key)));
 
     // decorate the sections with base and user methods
     this.sections.forEach((sectionName): void => {
-      (this as Record<string, unknown>)[sectionName as Section] = {
-        ...this._createInterface(sectionName, jsonrpc[sectionName as 'babe'] || {}),
-        ...this._createInterface(sectionName, userRpc[sectionName] || {})
-      };
+      (this as Record<string, unknown>)[sectionName as Section] ||= {};
+
+      const section = this[sectionName as Section] as Record<string, unknown>;
+
+      Object
+        .entries({
+          ...this._createInterface(sectionName, jsonrpc[sectionName as 'babe'] || {}),
+          ...this._createInterface(sectionName, userRpc[sectionName] || {})
+        })
+        .forEach(([key, value]): void => {
+          section[key] ||= value;
+        });
     });
   }
 
   private _createInterface<Section extends keyof RpcInterface> (section: string, methods: Record<string, DefinitionRpc | DefinitionRpcSub>): RpcInterface[Section] {
     return Object
-      .keys(methods)
-      .reduce((exposed, method): RpcInterface[Section] => {
+      .entries(methods)
+      .filter(([method, { endpoint }]) => !this.mapping.has(endpoint || `${section}_${method}`))
+      .reduce((exposed, [method, { endpoint }]): RpcInterface[Section] => {
         const def = methods[method];
         const isSubscription = !!(def as DefinitionRpcSub).pubsub;
+        const jsonrpc = endpoint || `${section}_${method}`;
 
-        this.mapping.set(`${section}_${method}`, { ...def, isSubscription, jsonrpc: `${section}_${method}`, method, section });
+        this.mapping.set(jsonrpc, { ...def, isSubscription, jsonrpc, method, section });
 
         // FIXME Remove any here
         // To do so, remove `RpcInterfaceMethod` from './types.ts', and refactor
@@ -167,51 +217,70 @@ export default class Rpc implements RpcInterface {
       }, {} as RpcInterface[Section]);
   }
 
-  private _createMethodWithRaw (creator: (isRaw: boolean) => (...values: any[]) => Observable<any>): RpcInterfaceMethod {
-    const call = creator(false) as Partial<RpcInterfaceMethod>;
+  private _memomize (creator: (outputAs: OutputType) => (...values: any[]) => Observable<any>): Memoized<RpcInterfaceMethod> {
+    const memoized = memoize(creator('scale') as RpcInterfaceMethod, {
+      getInstanceId: () => this.#instanceId
+    });
 
-    call.raw = creator(true);
+    memoized.json = creator('json');
+    memoized.raw = creator('raw');
 
-    return call as RpcInterfaceMethod;
+    return memoized;
   }
 
   private _createMethodSend (section: string, method: string, def: DefinitionRpc): RpcInterfaceMethod {
-    const rpcName = `${section}_${method}`;
+    const rpcName = def.endpoint || `${section}_${method}`;
+    const hashIndex = def.params.findIndex(({ isHistoric }) => isHistoric);
+    const cacheIndex = def.params.findIndex(({ isCached }) => isCached);
+    let memoized: null | Memoized<RpcInterfaceMethod> = null;
 
-    const creator = (isRaw: boolean) => (...values: any[]): Observable<any> => {
-      // Here, logically, it should be `of(this.formatInputs(method, values))`.
-      // However, formatInputs can throw, and when it does, the above way
-      // doesn't throw in the "Observable loop" (which is internally wrapped in
-      // a try/catch block). So we:
-      // - first do `of(1)` - won't throw
-      // - then do `map(()=>this.formatInputs)` - might throw, but inside Observable.
-      return of(1).pipe(
-        map(() => this._formatInputs(def, values)),
-        switchMap((params): Observable<[Codec[], any]> =>
-          combineLatest([
-            of(params),
-            from(this.provider.send(rpcName, params.map((param): AnyJson => param.toJSON())))
-          ])
-        ),
-        map(([params, result]) =>
-          isRaw
-            ? this.registry.createType('Raw', result)
-            : this._formatOutput(method, def, params, result)
-        ),
-        catchError((error): any => {
-          logErrorMessage(method, def, error);
+    // execute the RPC call, doing a registry swap for historic as applicable
+    const callWithRegistry = async (outputAs: OutputType, values: any[]): Promise<Codec | Codec[]> => {
+      const hash = hashIndex === -1
+        ? undefined
+        : values[hashIndex] as Uint8Array;
+      const { registry } = hash && this.#getBlockRegistry
+        ? await this.#getBlockRegistry(hash)
+        : { registry: this.#registryDefault };
+      const params = this._formatInputs(registry, def, values);
+      const data = await this.provider.send(rpcName, params.map((param): AnyJson => param.toJSON())) as AnyJson;
 
-          return throwError(error);
-        }),
+      return outputAs === 'scale'
+        ? this._formatOutput(registry, method, def, params, data)
+        : registry.createType(outputAs === 'raw' ? 'Raw' : 'Json', data);
+    };
+
+    const creator = (outputAs: OutputType) => (...values: any[]): Observable<any> => {
+      const isDelayed = (hashIndex !== -1 && !!values[hashIndex]) || (cacheIndex !== -1 && !!values[cacheIndex]);
+
+      return new Observable((observer: Observer<any>): VoidCallback => {
+        callWithRegistry(outputAs, values)
+          .then((value): void => {
+            observer.next(value);
+            observer.complete();
+          })
+          .catch((error): void => {
+            logErrorMessage(method, def, error);
+
+            observer.error(error);
+            observer.complete();
+          });
+
+        return (): void => {
+          // delete old results from cache
+          memoized?.unmemoize(...values);
+        };
+      }).pipe(
         publishReplay(1), // create a Replay(1)
-        refCount() // Unsubscribe WS when there are no more subscribers
+        isDelayed
+          ? refCountDelay() // Unsubscribe after delay
+          : refCount()
       );
     };
 
-    // We voluntarily don't cache the "one-shot" RPC calls. For example,
-    // `getStorage('123')` returns the current value, but this value can change
-    // over time, so we wouldn't want to cache the Observable.
-    return this._createMethodWithRaw(creator);
+    memoized = this._memomize(creator);
+
+    return memoized;
   }
 
   // create a subscriptor, it subscribes once and resolves with the id as subscribe
@@ -232,12 +301,13 @@ export default class Rpc implements RpcInterface {
     const subName = `${section}_${subMethod}`;
     const unsubName = `${section}_${unsubMethod}`;
     const subType = `${section}_${updateType}`;
-    let memoized: null | RpcInterfaceMethod & memoizee.Memoized<RpcInterfaceMethod> = null;
+    let memoized: null | Memoized<RpcInterfaceMethod> = null;
 
-    const creator = (isRaw: boolean) => (...values: unknown[]): Observable<any> => {
+    const creator = (outputAs: OutputType) => (...values: unknown[]): Observable<any> => {
       return new Observable((observer: Observer<any>): VoidCallback => {
         // Have at least an empty promise, as used in the unsubscribe
         let subscriptionPromise: Promise<number | string | null> = Promise.resolve(null);
+        const registry = this.#registryDefault;
 
         const errorHandler = (error: Error): void => {
           logErrorMessage(method, def, error);
@@ -246,7 +316,7 @@ export default class Rpc implements RpcInterface {
         };
 
         try {
-          const params = this._formatInputs(def, values);
+          const params = this._formatInputs(registry, def, values);
           const paramsJson = params.map((param): AnyJson => param.toJSON());
 
           const update = (error?: Error | null, result?: any): void => {
@@ -258,9 +328,9 @@ export default class Rpc implements RpcInterface {
 
             try {
               observer.next(
-                isRaw
-                  ? this.registry.createType('Raw', result)
-                  : this._formatOutput(method, def, params, result)
+                outputAs === 'scale'
+                  ? this._formatOutput(registry, method, def, params, result)
+                  : registry.createType(outputAs === 'raw' ? 'Raw' : 'Json', result)
               );
             } catch (error) {
               observer.error(error);
@@ -274,16 +344,8 @@ export default class Rpc implements RpcInterface {
 
         // Teardown logic
         return (): void => {
-          // Delete from cache
-          // Reason:
-          // ```
-          //    const s = api.query.system.account(addr1).subscribe(); // let's say it's 6
-          //    s.unsubscribe();
-          //    // wait a bit, for the nonce to increase to 7
-          //    api.query.system.account(addr1).subscribe(); // will output 6 instead of 7 if we don't clear cache
-          //    // that's because all our observables are replay(1)
-          // ```
-          memoized && memoized.delete(...values);
+          // Delete from cache, so old results don't hang around
+          memoized?.unmemoize(...values);
 
           // Unsubscribe from provider
           subscriptionPromise
@@ -297,20 +359,12 @@ export default class Rpc implements RpcInterface {
       }).pipe(drr());
     };
 
-    memoized = memoizee(this._createMethodWithRaw(creator), {
-      // Dynamic length for argument
-      length: false,
-      // Normalize args so that different args that should be cached
-      // together are cached together.
-      // E.g.: `query.my.method('abc') === query.my.method(createType('AccountId', 'abc'));`
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      normalizer: JSON.stringify
-    });
+    memoized = this._memomize(creator);
 
     return memoized;
   }
 
-  private _formatInputs (def: DefinitionRpc, inputs: any[]): Codec[] {
+  private _formatInputs (registry: Registry, def: DefinitionRpc, inputs: any[]): Codec[] {
     const reqArgCount = def.params.filter(({ isOptional }): boolean => !isOptional).length;
     const optText = reqArgCount === def.params.length
       ? ''
@@ -319,37 +373,25 @@ export default class Rpc implements RpcInterface {
     assert(inputs.length >= reqArgCount && inputs.length <= def.params.length, `Expected ${def.params.length} parameters${optText}, ${inputs.length} found instead`);
 
     return inputs.map((input, index): Codec =>
-      createTypeUnsafe(this.registry, def.params[index].type, [input])
+      createTypeUnsafe(registry, def.params[index].type, [input])
     );
   }
 
-  private _treatAsHex (key: StorageKey): boolean {
-    // :code is problematic - it does not have the length attached, which is
-    // unlike all other storage entries where it is indeed properly encoded
-    return ['0x3a636f6465'].includes(key.toHex());
-  }
-
-  private _formatOutput (method: string, rpc: DefinitionRpc, params: Codec[], result?: any): Codec | Codec[] {
+  private _formatOutput (registry: Registry, method: string, rpc: DefinitionRpc, params: Codec[], result?: any): Codec | Codec[] {
     if (rpc.type === 'StorageData') {
       const key = params[0] as StorageKey;
 
-      try {
-        return this._formatStorageData(key, result);
-      } catch (error) {
-        console.error(`Unable to decode storage ${key.section || 'unknown'}.${key.method || 'unknown'}:`, (error as Error).message);
-
-        throw error;
-      }
+      return this._formatStorageData(registry, key, result);
     } else if (rpc.type === 'StorageChangeSet') {
       const keys = params[0] as Vec<StorageKey>;
 
       return keys
-        ? this._formatStorageSet(keys, (result as StorageChangeSetJSON).changes)
-        : this.registry.createType('StorageChangeSet', result);
+        ? this._formatStorageSet(registry, keys, (result as StorageChangeSetJSON).changes)
+        : registry.createType('StorageChangeSet', result);
     } else if (rpc.type === 'Vec<StorageChangeSet>') {
       const mapped = (result as StorageChangeSetJSON[]).map(({ block, changes }): [Hash, Codec[]] => [
-        this.registry.createType('Hash', block),
-        this._formatStorageSet(params[0] as Vec<StorageKey>, changes)
+        registry.createType('Hash', block),
+        this._formatStorageSet(registry, params[0] as Vec<StorageKey>, changes)
       ]);
 
       // we only query at a specific block, not a range - flatten
@@ -358,44 +400,24 @@ export default class Rpc implements RpcInterface {
         : mapped as unknown as Codec[];
     }
 
-    return createTypeUnsafe(this.registry, rpc.type, [result]);
+    return createTypeUnsafe(registry, rpc.type, [result]);
   }
 
-  private _formatStorageData (key: StorageKey, value: string | null): Codec {
-    // single return value (via state.getStorage), decode the value based on the
-    // outputType that we have specified. Fallback to Raw on nothing
-    const type = key.outputType || 'Raw';
-    const meta = key.meta || EMPTY_META;
+  private _formatStorageData (registry: Registry, key: StorageKey, value: string | null): Codec {
     const isEmpty = isNull(value);
 
     // we convert to Uint8Array since it maps to the raw encoding, all
     // data will be correctly encoded (incl. numbers, excl. :code)
     const input = isEmpty
       ? null
-      : this._treatAsHex(key)
+      : isTreatAsHex(key)
         ? value
         : u8aToU8a(value);
 
-    if (meta.modifier.isOptional) {
-      return new Option(
-        this.registry,
-        createClass(this.registry, type),
-        isEmpty
-          ? null
-          : createTypeUnsafe(this.registry, type, [input], true)
-      );
-    }
-
-    return createTypeUnsafe(this.registry, type, [
-      isEmpty
-        ? meta.fallback
-          ? hexToU8a(meta.fallback.toHex())
-          : undefined
-        : input
-    ], true);
+    return this._newType(registry, key, input, isEmpty);
   }
 
-  private _formatStorageSet (keys: Vec<StorageKey>, changes: [string, string | null][]): Codec[] {
+  private _formatStorageSet (registry: Registry, keys: Vec<StorageKey>, changes: [string, string | null][]): Codec[] {
     // For StorageChangeSet, the changes has the [key, value] mappings
     const withCache = keys.length !== 1;
 
@@ -403,25 +425,16 @@ export default class Rpc implements RpcInterface {
     // one at a time, all based on the query types. Three values can be returned -
     //   - Codec - There is a valid value, non-empty
     //   - null - The storage key is empty
-    return keys.reduce((results: Codec[], key: StorageKey): Codec[] => {
-      try {
-        results.push(this._formatStorageSetEntry(key, changes, withCache));
-      } catch (error) {
-        console.error(`Unable to decode storage ${key.section || 'unknown'}.${key.method || 'unknown'}:`, (error as Error).message);
-
-        throw error;
-      }
+    return keys.reduce((results: Codec[], key: StorageKey, index): Codec[] => {
+      results.push(this._formatStorageSetEntry(registry, key, changes, withCache, index));
 
       return results;
     }, []);
   }
 
-  private _formatStorageSetEntry (key: StorageKey, changes: [string, string | null][], witCache: boolean): Codec {
-    // Fallback to Raw (i.e. just the encoding) if we don't have a specific type
-    const type = key.outputType || 'Raw';
+  private _formatStorageSetEntry (registry: Registry, key: StorageKey, changes: [string, string | null][], witCache: boolean, entryIndex: number): Codec {
     const hexKey = key.toHex();
-    const meta = key.meta || EMPTY_META;
-    const found = changes.find(([key]): boolean => key === hexKey);
+    const found = changes.find(([key]) => key === hexKey);
 
     // if we don't find the value, this is our fallback
     //   - in the case of an array of values, fill the hole from the cache
@@ -431,7 +444,7 @@ export default class Rpc implements RpcInterface {
       ? (witCache && this.#storageCache.get(hexKey)) || null
       : found[1];
     const isEmpty = isNull(value);
-    const input = isEmpty || this._treatAsHex(key)
+    const input = isEmpty || isTreatAsHex(key)
       ? value
       : u8aToU8a(value);
 
@@ -440,22 +453,44 @@ export default class Rpc implements RpcInterface {
     // will increase memory beyond what is allowed.
     this.#storageCache.set(hexKey, value);
 
+    return this._newType(registry, key, input, isEmpty, entryIndex);
+  }
+
+  private _newType (registry: Registry, key: StorageKey, input: string | Uint8Array | null, isEmpty: boolean, entryIndex = -1): Codec {
+    // single return value (via state.getStorage), decode the value based on the
+    // outputType that we have specified. Fallback to Raw on nothing
+    const type = key.outputType || 'Raw';
+    const meta = key.meta || EMPTY_META;
+    const entryNum = entryIndex === -1
+      ? ''
+      : ` entry ${entryIndex}:`;
+
     if (meta.modifier.isOptional) {
-      return new Option(
-        this.registry,
-        createClass(this.registry, type),
-        isEmpty
-          ? null
-          : createTypeUnsafe(this.registry, type, [input], true)
-      );
+      let inner = null;
+
+      if (!isEmpty) {
+        try {
+          inner = createTypeUnsafe(registry, type, [input], { isPedantic: true });
+        } catch (error) {
+          l.error(`Unable to decode storage ${key.section || 'unknown'}.${key.method || 'unknown'}:${entryNum}`, (error as Error).message);
+        }
+      }
+
+      return new Option(registry, createClass(registry, type), inner);
     }
 
-    return createTypeUnsafe(this.registry, type, [
-      isEmpty
-        ? meta.fallback
-          ? hexToU8a(meta.fallback.toHex())
-          : undefined
-        : input
-    ], true);
+    try {
+      return createTypeUnsafe(registry, type, [
+        isEmpty
+          ? meta.fallback
+            ? hexToU8a(meta.fallback.toHex())
+            : undefined
+          : input
+      ], { isPedantic: true });
+    } catch (error) {
+      l.error(`Unable to decode storage ${key.section || 'unknown'}.${key.method || 'unknown'}:${entryNum}`, (error as Error).message);
+
+      return registry.createType('Raw', input);
+    }
   }
 }
